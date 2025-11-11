@@ -73,7 +73,7 @@ class Traveler(Base):
     passport_number = Column(String, unique=True)
     id_card_number = Column(String, unique=True)
     login = Column(String, unique=True, nullable=False)
-    password_hash = Column(String, nullable=False) # Zmieniono nazwę z 'Haslo'
+    password_hash = Column(String, nullable=False)
 
     trips = relationship("Trip", back_populates="traveler")
 
