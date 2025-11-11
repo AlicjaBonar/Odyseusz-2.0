@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Test API Odyseusz</title>
+</head>
+<body>
+  <h1>Test Odyseusz</h1>
+
+  <h2>Dodaj Travelera</h2>
+  <form id="travelerForm">
+    <input type="text" name="pesel" placeholder="PESEL" required>
+    <input type="text" name="first_name" placeholder="Imię" required>
+    <input type="text" name="last_name" placeholder="Nazwisko" required>
+    <input type="email" name="email" placeholder="Email" required>
+    <input type="text" name="login" placeholder="Login" required>
+    <input type="password" name="password" placeholder="Hasło" required>
+    <button type="submit">Dodaj</button>
+  </form>
+  <pre id="travelerResult"></pre>
+
+  <h2>Lista Travelerów</h2>
+  <button id="getTravelers">Pobierz</button>
+  <pre id="travelerList"></pre>
+
+  <h2>Dodaj Kraj</h2>
+  <form id="countryForm">
+    <input type="text" name="name" placeholder="Nazwa kraju" required>
+    <button type="submit">Dodaj</button>
+  </form>
+  <pre id="countryResult"></pre>
+
+  <h2>Dodaj Miasto</h2>
+  <form id="cityForm">
+    <input type="text" name="name" placeholder="Nazwa miasta" required>
+    <input type="number" name="country_id" placeholder="ID kraju" required>
+    <button type="submit">Dodaj</button>
+  </form>
+  <pre id="cityResult"></pre>
+
+  <h2>Pobierz Kraj z Miastami</h2>
+  <input type="number" id="getCountryId" placeholder="ID kraju">
+  <button id="getCountryBtn">Pobierz</button>
+  <pre id="countryWithCities"></pre>
+
+  <h2>Dodaj Trip</h2>
+  <form id="tripForm">
+    <input type="text" name="status" placeholder="Status" required>
+    <input type="text" name="traveler_pesel" placeholder="PESEL podróżnika" required>
+    <button type="submit">Dodaj</button>
+  </form>
+  <pre id="tripResult"></pre>
+
+  <h2>Pobierz Tripy Podróżnika</h2>
+  <input type="text" id="getTripsPesel" placeholder="PESEL">
+  <button id="getTripsBtn">Pobierz</button>
+  <pre id="tripsList"></pre>
+
+<script>
+const API_BASE = 'http://127.0.0.1:5000';
+
+// Dodaj Travelera
+document.getElementById('travelerForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target).entries());
+  const res = await fetch(`${API_BASE}/travelers`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  });
+  const json = await res.json();
+  document.getElementById('travelerResult').textContent = JSON.stringify(json, null, 2);
+  e.target.reset();
+};
+
+// Pobierz wszystkich Travelerów
+document.getElementById('getTravelers').onclick = async () => {
+  const res = await fetch(`${API_BASE}/travelers`);
+  const json = await res.json();
+  document.getElementById('travelerList').textContent = JSON.stringify(json, null, 2);
+};
+
+// Dodaj Kraj
+document.getElementById('countryForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target).entries());
+  const res = await fetch(`${API_BASE}/countries`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  });
+  const json = await res.json();
+  document.getElementById('countryResult').textContent = JSON.stringify(json, null, 2);
+  e.target.reset();
+};
+
+// Dodaj Miasto
+document.getElementById('cityForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target).entries());
+  const res = await fetch(`${API_BASE}/cities`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  });
+  const json = await res.json();
+  document.getElementById('cityResult').textContent = JSON.stringify(json, null, 2);
+  e.target.reset();
+};
+
+// Pobierz Kraj z Miastami
+document.getElementById('getCountryBtn').onclick = async () => {
+  const id = document.getElementById('getCountryId').value;
+  const res = await fetch(`${API_BASE}/countries/${id}`);
+  const json = await res.json();
+  document.getElementById('countryWithCities').textContent = JSON.stringify(json, null, 2);
+};
+
+// Dodaj Trip
+document.getElementById('tripForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target).entries());
+  const res = await fetch(`${API_BASE}/trips`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  });
+  const json = await res.json();
+  document.getElementById('tripResult').textContent = JSON.stringify(json, null, 2);
+  e.target.reset();
+};
+
+// Pobierz Tripy Podróżnika
+document.getElementById('getTripsBtn').onclick = async () => {
+  const pesel = document.getElementById('getTripsPesel').value;
+  const res = await fetch(`${API_BASE}/travelers/${pesel}/trips`);
+  const json = await res.json();
+  document.getElementById('tripsList').textContent = JSON.stringify(json, null, 2);
+};
+</script>
+</body>
+</html>
