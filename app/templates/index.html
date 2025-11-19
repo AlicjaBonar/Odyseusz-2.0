@@ -1,61 +1,73 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <title>Test API Odyseusz</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta charset="UTF-8">
+    <title>System Odyseusz - Logowanie</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-  <h1>Test Odyseusz</h1>
+  <div class="container">
+    <h1>Witaj w systemie Odyseusz</h1>
 
-  <h2>Dodaj Podróżnego</h2>
-  <form id="travelerForm">
-    <input type="text" name="pesel" placeholder="PESEL" required>
-    <input type="text" name="first_name" placeholder="Imię" required>
-    <input type="text" name="last_name" placeholder="Nazwisko" required>
-    <input type="email" name="email" placeholder="Email" required>
-    <input type="text" name="login" placeholder="Login" required>
-    <input type="password" name="password" placeholder="Hasło" required>
-    <button type="submit">Dodaj</button>
-  </form>
-  <pre id="travelerResult"></pre>
+    <div class="login-mockup">
+        <h2>Zaloguj się do systemu</h2>
+        
+        <div class="login-option">
+            <span class="login-option-icon">🔒</span>
+            <div class="login-option-text">
+                <strong>Profil zaufany</strong>
+                <small>Użyj loginu i hasła lub bankowości elektronicznej.</small>
+            </div>
+            <span class="login-option-arrow">></span>
+        </div>
 
-  <h2>Lista Podróżnych</h2>
-  <button id="getTravelers">Pobierz</button>
-  <pre id="travelerList"></pre>
+        <div class="login-option" id="actualLoginBtn">
+            <span class="login-option-icon">📱</span>
+            <div class="login-option-text">
+                <strong>Aplikacja Odyseusz</strong>
+                <span class="recommended-badge">Polecany</span>
+                <small>Zaloguj się do systemu Odyseusz.</small>
+            </div>
+            <span class="login-option-arrow">></span>
+        </div>
 
-  <h2>Dodaj Kraj</h2>
-  <form id="countryForm">
-    <input type="text" name="name" placeholder="Nazwa kraju" required>
-    <button type="submit">Dodaj</button>
-  </form>
-  <pre id="countryResult"></pre>
+        <div class="login-option">
+            <span class="login-option-icon">🏛️</span>
+            <div class="login-option-text">
+                <strong>Bankowość elektroniczna</strong>
+                <small>Zaloguj się za pomocą swojego banku.</small>
+            </div>
+            <span class="login-option-arrow">></span>
+        </div>
 
-  <h2>Dodaj Miasto</h2>
-  <form id="cityForm">
-    <input type="text" name="name" placeholder="Nazwa miasta" required>
-    <input type="number" name="country_id" placeholder="ID kraju" required>
-    <button type="submit">Dodaj</button>
-  </form>
-  <pre id="cityResult"></pre>
+        <div class="login-option">
+            <span class="login-option-icon">🌐</span> 
+            <div class="login-option-text">
+                <strong>E-dowód</strong>
+                <small>Użyj dowodu osobistego z warstwą elektroniczną i smartfona lub czytnika NFC.</small>
+            </div>
+            <span class="login-option-arrow">></span>
+        </div>
 
-  <h2>Pobierz Kraj z Miastami</h2>
-  <input type="number" id="getCountryId" placeholder="ID kraju">
-  <button id="getCountryBtn">Pobierz</button>
-  <pre id="countryWithCities"></pre>
+    </div>
 
-  <h2>Dodaj Podróż</h2>
-  <form id="tripForm">
-    <input type="text" name="status" placeholder="Status" required>
-    <input type="text" name="traveler_pesel" placeholder="PESEL podróżnika" required>
-    <button type="submit">Dodaj</button>
-  </form>
-  <pre id="tripResult"></pre>
 
-  <h2>Pobierz Podróże Podróżnika</h2>
-  <input type="text" id="getTripsPesel" placeholder="PESEL">
-  <button id="getTripsBtn">Pobierz</button>
-  <pre id="tripsList"></pre>
-  <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+  </div>
+  <script>
+    // FAKTYCZNE PRZEKIEROWANIE DLA LOGOWANIA W MOCKUPIE
+    document.getElementById('actualLoginBtn').onclick = () => {
+        location.href = "{{ url_for('app_bp.login_page') }}";
+    };
+
+    // Dodanie logiki dla nieaktywnych opcji (opcjonalnie, dla lepszego efektu)
+    document.querySelectorAll('.login-mockup .login-option').forEach(option => {
+        if (option.id !== 'actualLoginBtn') {
+            option.onclick = () => {
+                alert("Ta opcja jest obecnie nieaktywna (mockup).");
+            };
+        }
+    });
+
+  </script>
 </body>
 </html>
