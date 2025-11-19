@@ -1,8 +1,10 @@
+const API_BASE = 'http://127.0.0.1:5000';
 
 // Dodaj Travelera
 document.getElementById('travelerForm').onsubmit = async (e) => {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(e.target).entries());
+  console.log("Dane do wysłania:", data);
   const res = await fetch(`${API_BASE}/travelers`, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -23,7 +25,7 @@ document.getElementById('getTravelers').onclick = async () => {
 // Dodaj Kraj
 document.getElementById('countryForm').onsubmit = async (e) => {
   e.preventDefault();
-  const data = Object.fromEntries(new FormData(e.target).entries());
+  const data = Object.fromEntries(new FormData(e.target).entries())
   const res = await fetch(`${API_BASE}/countries`, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
