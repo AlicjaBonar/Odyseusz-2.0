@@ -22,6 +22,13 @@
         <div id="message"></div>
     </div>
 
+    <div id="popup">
+        <div >
+            <p id="popupMessage"></p>
+            <button id="goToLogin">Przejdź do strony logowania</button>
+        </div>
+    </div>
+
     <script>
         const form = document.getElementById('travelerForm');
         form.addEventListener('submit', async (e) => {
@@ -33,7 +40,20 @@
                 body: JSON.stringify(data)
             });
             const result = await res.json();
-            document.getElementById('message').textContent = result.message || result.error;
+            
+            const popup = document.getElementById('popup');
+            const popupMessage = document.getElementById('popupMessage');
+            if (res.status === 201) {
+                popupMessage.textContent = "Rejestracja przebiegła pomyślnie!";
+                popup.style.display = 'flex';
+            } else {
+                document.getElementById('message').textContent = result.error;
+                
+            }
+        });
+
+        document.getElementById('goToLogin').addEventListener('click', () => {
+            window.location.href = "{{ url_for('app_bp.login_page') }}";  
         });
     </script>
 </body>
