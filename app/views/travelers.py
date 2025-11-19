@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash
 
 travelers_bp = Blueprint('travelers', __name__)
 
-@travelers_bp.route("/travelers", methods=["POST"])
+@travelers_bp.route("/register", methods=["POST"])
 def create_traveler():
     data = request.get_json()
     if not data:
