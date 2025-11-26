@@ -10,6 +10,7 @@ def print_usage():
     sys.exit(1)
 
 
+
 def init_database():
     engine = create_engine(f"sqlite:///{DATABASE_NAME}.db", echo=True)
     Session = sessionmaker(bind=engine, autoflush=True)
