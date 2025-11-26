@@ -1,45 +1,226 @@
-body {
-  font-family: Arial, sans-serif;
-  background-color: #f9f9f9;
-  color: #222;
-  margin: 20px;
+/* ============================================== */
+/* GLOBALNE I OGÓLNE STYLE            */
+/* ============================================== */
+
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f5f5;
+    color: #000000;
 }
 
-h1, h2 {
-  color: #004ea2; /* Gov blue */
+.container {
+    max-width: 550px; /* Nieco szerszy, żeby mockup ładnie wyglądał */
+    margin: 80px auto;
+    padding: 30px 40px;
+    background-color: #fff;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    text-align: center;
 }
 
-form {
-  margin-bottom: 20px;
-  padding: 10px;
-  background: #ffffff;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+h1 {
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 25px;
+    color: #051423; /* gov blue */
 }
 
-input, button {
-  display: block;
-  width: 100%;
-  margin: 5px 0;
-  padding: 8px;
-  font-size: 14px;
+hr {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 30px 0;
 }
 
+/* ============================================== */
+/* STYLE PRZYCISKÓW I FORMULARZY        */
+/* ============================================== */
+
+
+.container form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; 
+}
+
+.buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px; /* Dodatkowy margines po HR */
+}
+
+/* Przycisk główny (dla rejestracji) */
 button {
-  background-color: #004ea2;
-  color: #fff;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: 500;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.2s;
+    color: #fff;
+    background-color: #be0404; /* gov red */
 }
 
 button:hover {
-  background-color: #003370;
+    background-color: #a80000b1;
 }
 
-pre {
-  background: #f0f0f0;
-  padding: 10px;
-  border-radius: 3px;
-  overflow-x: auto;
+.neutral-button {
+    padding: 8px 15px; 
+    font-size: 14px;  
+    font-weight: 400; 
+    color: #333; 
+    background-color: #e9ecef; 
+    border: 1px solid #ced4da; 
+}
+
+.neutral-button:hover {
+    background-color: #dee2e6;
+    color: #212529;
+}
+
+/* Inputy formularzy (jeśli są używane na innych stronach) */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"] {
+    padding: 10px;
+    font-size: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+input:focus {
+    border-color: #0d3b66;
+    outline: none;
+    box-shadow: 0 0 3px rgba(13,59,102,0.4);
+}
+
+/* Wiadomości */
+#message {
+    margin-top: 12px;
+    font-size: 14px;
+    color: #d70000;
+}
+
+
+/* ============================================== */
+/* STYLE MOCKUPU LOGOWANIA (GOV.PL)     */
+/* ============================================== */
+
+.login-mockup {
+    max-width: 500px;
+    margin: 20px auto 0 auto; /* Zmniejszony górny margines, bo jest już w .container */
+    padding: 20px 0;
+    border-top: 1px solid #ddd; 
+    text-align: left; /* Wyrównanie dla opcji */
+}
+
+.login-mockup h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: #212529;
+    font-weight: 400; /* Lżejsza waga jak na zrzucie */
+}
+
+/* Styl dla pojedynczej opcji logowania (kafelek) */
+.login-option {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.login-option:hover {
+    background-color: #e2e6ea;
+    border-color: #dae0e5;
+}
+
+.login-option-icon {
+    font-size: 1.8rem;
+    margin-right: 15px;
+    color: #007bff; /* Podobny do koloru gov.pl */
+    min-width: 30px;
+    text-align: center;
+}
+
+.login-option-text {
+    flex-grow: 1; /* Pozwala tekstowi zająć dostępną przestrzeń */
+}
+
+.login-option-text strong {
+    display: block;
+    font-weight: 600; 
+    color: #212529;
+}
+
+.login-option-text small {
+    color: #6c757d;
+}
+
+.login-option-arrow {
+    margin-left: auto;
+    font-size: 1.5rem;
+    color: #6c757d;
+}
+
+.recommended-badge {
+    background-color: #007bff;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+/* --- Popup / Modal --- */
+#popup {
+    display: none; /* ukryty domyślnie */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5); /* półprzezroczyste tło */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+#popup div {
+    background: white;
+    padding: 25px 30px;
+    border-radius: 10px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+}
+
+#popup p {
+    font-size: 16px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+/* ============================================== */
+/* RESPONSIVE                        */
+/* ============================================== */
+
+@media (max-width: 600px) {
+    .container {
+        margin: 40px 15px;
+        padding: 20px;
+    }
 }

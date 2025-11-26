@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Rejestracja podróżnego</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Rejestracja podróżnego</h1>
+        <form class="loginForm" id="travelerForm">
+            <input type="text" name="pesel" placeholder="PESEL" required>
+            <input type="text" name="first_name" placeholder="Imię" required>
+            <input type="text" name="last_name" placeholder="Nazwisko" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="text" name="login" placeholder="Login" required>
+            <input type="password" name="password" placeholder="Hasło" required>
+            </br>
+            </br>
+            <button type="submit">Zarejestruj</button>
+        </form>
+        <div id="message"></div>
+    </div>
+
+    <div id="popup">
+        <div >
+            <p id="popupMessage"></p>
+            <button id="goToLogin">Przejdź do strony logowania</button>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('travelerForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(form));
+            const res = await fetch('/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            
+            const popup = document.getElementById('popup');
+            const popupMessage = document.getElementById('popupMessage');
+            if (res.status === 201) {
+                popupMessage.textContent = "Rejestracja przebiegła pomyślnie!";
+                popup.style.display = 'flex';
+            } else {
+                document.getElementById('message').textContent = result.error;
+                
+            }
+        });
+
+        document.getElementById('goToLogin').addEventListener('click', () => {
+            window.location.href = "{{ url_for('app_bp.login_page') }}";  
+        });
+    </script>
+</body>
+</html>
