@@ -1,0 +1,34 @@
+<hr>
+<h2>Zarządzanie Kryzysowe (Admin)</h2>
+<form id="evacuationForm">
+    <label>ID Miasta (zagrożonego):</label>
+    <input type="number" name="city_id" required>
+
+    <label>Nazwa zdarzenia:</label>
+    <input type="text" name="action_name" placeholder="np. Powódź stulecia" required>
+
+    <label>Opis zagrożenia (treść SMS/Powiadomienia):</label>
+    <input type="text" name="description" placeholder="Prosimy o ewakuację..." required>
+
+    <button type="submit">Ogłoś ALARM</button>
+</form>
+<div id="evacuationResult"></div>
+
+<script>
+document.getElementById('evacuationForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target).entries());
+
+  data.city_id = parseInt(data.city_id);
+
+  const res = await fetch('/evacuations', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  });
+  const json = await res.json();
+  document.getElementById('evacuationResult').textContent =
+      `Status: ${json.message}. Wysłano powiadomień: ${json.affected_travelers_count}`;
+  e.target.reset();
+};
+</script>

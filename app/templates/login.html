@@ -28,30 +28,46 @@
     </div>
 
     <script>
-        // 1. Logika formularza logowania (AJAX)
-        const form = document.getElementById('loginForm');
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const data = Object.fromEntries(new FormData(form));
-            
-            // Symulacja logowania
-            const res = await fetch('/login', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
-            
-            const result = await res.json();
-            document.getElementById('message').textContent = result.message || result.error;
+    const form = document.getElementById('loginForm');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault(); // Zapobiega przeładowaniu strony
+        const data = Object.fromEntries(new FormData(form));
+
+        // Wysyłanie danych do backendu
+        const res = await fetch('/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
         });
 
-        // 2. Logika przekierowania przycisków rejestracji
-        document.getElementById('registerTravelerBtn').onclick = () => {
-            location.href = "{{ url_for('app_bp.register_traveler_page') }}";
-        };
-        document.getElementById('registerEmployeeBtn').onclick = () => {
-            location.href = "{{ url_for('app_bp.register_employee_page') }}";
-        };
-    </script>
+        // --- TUTAJ JEST ZMIANA ---
+
+        if (res.ok) {
+            // Jeśli logowanie udane (kod 200)
+            const result = await res.json();
+
+            if (result.redirect_url) {
+                // Przekieruj na dashboard
+                window.location.href = result.redirect_url;
+            } else {
+                // Fallback (np. dla admina lub gdy brak URL)
+                document.getElementById('message').textContent = result.message;
+            }
+        } else {
+            // Jeśli błąd (kod 401, 400 itp.)
+            const result = await res.json();
+            document.getElementById('message').textContent = result.error || "Błąd logowania";
+        }
+    });
+
+    // Obsługa przycisków rejestracji (pozostaje bez zmian)
+    document.getElementById('registerTravelerBtn').onclick = () => {
+        location.href = "{{ url_for('app_bp.register_traveler_page') }}";
+    };
+    document.getElementById('registerEmployeeBtn').onclick = () => {
+        location.href = "{{ url_for('app_bp.register_employee_page') }}";
+    };
+</script>
 </body>
 </html>

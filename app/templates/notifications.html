@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Powiadomienia</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .notification-item {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .notification-unread {
+            background-color: #fff;
+            border-left: 6px solid #be0404;
+            font-weight: 600;
+        }
+
+        .notification-unread .status-badge {
+            color: #be0404;
+            font-weight: bold;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            float: right;
+        }
+
+        .notification-read {
+            background-color: #f0f0f0;
+            border-left: 6px solid #ccc;
+            color: #666;
+            font-weight: 400;
+        }
+
+        .notification-read .status-badge {
+            display: none;
+        }
+
+        .notification-date {
+            font-size: 0.75rem;
+            color: #888;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .notification-content {
+            margin-top: 8px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+
+        .notification-body-full {
+            display: none; /* Ukryte domyślnie */
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            color: #333;
+            font-weight: normal;
+        }
+
+        .expanded .notification-body-full {
+            display: block; /* Pokaż po kliknięciu */
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Centrum Powiadomień</h1>
+
+        <p>Zalogowany jako: <strong>{{ traveler.login }}</strong></p>
+        <input type="hidden" id="peselInput" value="{{ traveler.pesel }}">
+
+        <hr>
+
+        <div id="notificationsList" class="login-mockup">
+            <div style="padding: 20px; color: #666;">Ładowanie powiadomień...</div>
+        </div>
+
+        <div class="buttons">
+            <button class="neutral-button" onclick="window.location.href='{{ url_for('notifications.traveler_dashboard', pesel=traveler.pesel) }}'">
+                Wróć do strony głównej
+            </button>
+        </div>
+    </div>
+
+    <script>
+        async function loadNotifications() {
+            const pesel = document.getElementById('peselInput').value;
+            const listContainer = document.getElementById('notificationsList');
+
+            try {
+                const res = await fetch(`/travelers/${pesel}/notifications`);
+                if (!res.ok) {
+                    listContainer.innerHTML = '<p>Błąd pobierania danych.</p>';
+                    return;
+                }
+                const data = await res.json();
+
+                listContainer.innerHTML = '';
+
+                if(data.length === 0) {
+                    listContainer.innerHTML = '<p>Brak powiadomień. Jesteś bezpieczny.</p>';
+                    return;
+                }
+
+                data.forEach(note => {
+                    const div = document.createElement('div');
+
+                    const statusClass = note.is_read ? 'notification-read' : 'notification-unread';
+                    const badgeHtml = note.is_read ? '' : '<span class="status-badge">Nowe ●</span>';
+                    const previewText = note.is_read ? 'Kliknij, aby zobaczyć szczegóły.' : '⚠️ Kliknij, aby odczytać wiadomość!';
+
+                    div.className = `notification-item ${statusClass}`;
+
+                    div.onclick = function() { toggleNotification(note.id, this, note.is_read); };
+
+                    div.innerHTML = `
+                        <span class="notification-date">${note.created_at}</span>
+                        ${badgeHtml}
+                        <strong>Komunikat systemu Odyseusz</strong>
+
+                        <div class="notification-content">
+                            ${previewText}
+                        </div>
+
+                        <div class="notification-body-full">
+                            ${note.message}
+                        </div>
+                    `;
+                    listContainer.appendChild(div);
+                });
+            } catch(e) {
+                console.error(e);
+                listContainer.innerHTML = '<p>Błąd połączenia z serwerem.</p>';
+            }
+        }
+
+        async function toggleNotification(id, element, wasRead) {
+            const isExpanded = element.classList.contains('expanded');
+
+            if (isExpanded) {
+                element.classList.remove('expanded');
+                return;
+            }
+
+            element.classList.add('expanded');
+
+            if (!wasRead && element.classList.contains('notification-unread')) {
+                try {
+                    element.classList.remove('notification-unread');
+                    element.classList.add('notification-read');
+
+                    const badge = element.querySelector('.status-badge');
+                    if(badge) badge.style.display = 'none';
+
+                    const preview = element.querySelector('.notification-content');
+                    if(preview) preview.innerText = "Szczegóły:";
+
+                    await fetch(`/notifications/${id}/mark_read`, { method: 'POST' });
+
+                } catch (err) {
+                    console.error("Nie udało się oznaczyć jako przeczytane", err);
+                }
+            }
+        }
+
+        loadNotifications();
+    </script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Podróżnego</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Witaj, {{ traveler.first_name }}!</h1>
+        <p>Jesteś zalogowany w systemie Odyseusz.</p>
+
+        <hr>
+
+        <div class="login-mockup">
+            <div class="login-option" onclick="window.location.href='{{ url_for('notifications.notifications_page', pesel=traveler.pesel) }}'">
+                <span class="login-option-icon">🔔</span>
+                <div class="login-option-text">
+                    <strong>Powiadomienia</strong>
+                    <small>Sprawdź alerty bezpieczeństwa</small>
+                </div>
+                <span class="login-option-arrow">></span>
+            </div>
+
+            <div class="login-option">
+                <span class="login-option-icon">🌍</span>
+                <div class="login-option-text">
+                    <strong>Moje podróże</strong>
+                    <small>Historia i planowane wyjazdy</small>
+                </div>
+                <span class="login-option-arrow">></span>
+            </div>
+        </div>
+
+        <div class="buttons">
+            <button class="neutral-button" onclick="window.location.href='{{ url_for('app_bp.login_page') }}'">Wyloguj</button>
+        </div>
+    </div>
+</body>
+</html>

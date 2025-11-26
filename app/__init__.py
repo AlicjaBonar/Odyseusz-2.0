@@ -25,6 +25,8 @@ def create_app():
     for bp in all_blueprints:
         app.register_blueprint(bp)
 
+
+
     # Tworzenie i zamykanie sesji bazy
     @app.before_request
     def create_session():

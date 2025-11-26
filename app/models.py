@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from app.database.database import Base  # Importujemy Base
+from sqlalchemy import Boolean
+from datetime import datetime
 
 
 class Country(Base):
@@ -121,3 +123,15 @@ class Stage(Base):
 
     trip = relationship("Trip", back_populates="stages")
     location = relationship("Location", back_populates="stages")
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+    id = Column(Integer, primary_key=True, index=True)
+    traveler_pesel = Column(String, ForeignKey("travelers.pesel"))
+    message = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.now)
+    is_read = Column(Boolean, default=False)
+
+    # Relacja
+    traveler = relationship("Traveler", backref="notifications")
