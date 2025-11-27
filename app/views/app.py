@@ -8,10 +8,6 @@ app_bp = Blueprint("app_bp", __name__)
 def index_page():
     return render_template("index.html")
 
-@app_bp.route("/login_page")
-def login_page():
-    return render_template("login.html")
-
 @app_bp.route("/register_traveler_page")
 def register_traveler_page():
     return render_template("register_traveler.html")
@@ -20,10 +16,13 @@ def register_traveler_page():
 def register_employee_page():
     return render_template("register_employee.html")
 
+@login_required
 @app_bp.route("/register_travel")
 def register_travel_page():
-    return render_template("register_travel.html")
+    traveler = current_user
+    return render_template("register_travel.html", traveler=traveler)
 
+@login_required
 @app_bp.route("/add_companions_to_travel")
 def add_companions_to_travel_page():
     # Pobieramy tylko pesel z query parameters
@@ -59,3 +58,12 @@ def traveler_dashboard():
     # przekazujemy do szablonu dashboard.html
     return render_template("dashboard.html", traveler=traveler)
     # return "<h1>Under Construction 🚧</h1><p>Panel podróżnego jest w trakcie tworzenia. Prosimy o cierpliwość.</p>"
+
+@login_required
+@app_bp.route("/travelers_trips")
+def travelers_trips_page():
+    traveler = current_user
+    # Pobranie podróży podróżnego z bazy
+    trips = g.db.query(Trip).filter(Trip.traveler_pesel == traveler.pesel).all()
+    
+    return render_template("travelers_trips.html", traveler=traveler, trips=trips)

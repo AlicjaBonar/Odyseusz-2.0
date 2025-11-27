@@ -1,65 +1,58 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <title>System Odyseusz - Logowanie</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-  <div class="container">
-    <h1>Witaj w systemie Odyseusz</h1>
+{% extends "base.html" %}
 
-    <div class="login-mockup">
-        <h2>Zaloguj się do systemu</h2>
-        
-        <div class="login-option">
-            <span class="login-option-icon">🔒</span>
-            <div class="login-option-text">
-                <strong>Profil zaufany</strong>
-                <small>Użyj loginu i hasła lub bankowości elektronicznej.</small>
-            </div>
-            <span class="login-option-arrow">></span>
+{% block title %}System Odyseusz - Logowanie{% endblock %}
+
+{% block content %}
+<div class="login-mockup">
+    <h2>Zaloguj się do systemu</h2>
+    
+    <div class="login-option">
+        <span class="login-option-icon">🔒</span>
+        <div class="login-option-text">
+            <strong>Profil zaufany</strong>
+            <small>Użyj loginu i hasła lub bankowości elektronicznej.</small>
         </div>
-
-        <div class="login-option" id="actualLoginBtn">
-            <span class="login-option-icon">📱</span>
-            <div class="login-option-text">
-                <strong>Aplikacja Odyseusz</strong>
-                <span class="recommended-badge">Polecany</span>
-                <small>Zaloguj się do systemu Odyseusz.</small>
-            </div>
-            <span class="login-option-arrow">></span>
-        </div>
-
-        <div class="login-option">
-            <span class="login-option-icon">🏛️</span>
-            <div class="login-option-text">
-                <strong>Bankowość elektroniczna</strong>
-                <small>Zaloguj się za pomocą swojego banku.</small>
-            </div>
-            <span class="login-option-arrow">></span>
-        </div>
-
-        <div class="login-option">
-            <span class="login-option-icon">🌐</span> 
-            <div class="login-option-text">
-                <strong>E-dowód</strong>
-                <small>Użyj dowodu osobistego z warstwą elektroniczną i smartfona lub czytnika NFC.</small>
-            </div>
-            <span class="login-option-arrow">></span>
-        </div>
-
+        <span class="login-option-arrow">></span>
     </div>
 
+    <div class="login-option" id="actualLoginBtn">
+        <span class="login-option-icon">📱</span>
+        <div class="login-option-text">
+            <strong>Aplikacja Odyseusz</strong>
+            <span class="recommended-badge">Polecany</span>
+            <small>Zaloguj się do systemu Odyseusz.</small>
+        </div>
+        <span class="login-option-arrow">></span>
+    </div>
 
-  </div>
-  <script>
+    <div class="login-option">
+        <span class="login-option-icon">🏛️</span>
+        <div class="login-option-text">
+            <strong>Bankowość elektroniczna</strong>
+            <small>Zaloguj się za pomocą swojego banku.</small>
+        </div>
+        <span class="login-option-arrow">></span>
+    </div>
+
+    <div class="login-option">
+        <span class="login-option-icon">🌐</span> 
+        <div class="login-option-text">
+            <strong>E-dowód</strong>
+            <small>Użyj dowodu osobistego z warstwą elektroniczną i smartfona lub czytnika NFC.</small>
+        </div>
+        <span class="login-option-arrow">></span>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
     // FAKTYCZNE PRZEKIEROWANIE DLA LOGOWANIA W MOCKUPIE
     document.getElementById('actualLoginBtn').onclick = () => {
-        location.href = "{{ url_for('app_bp.login_page') }}";
+        location.href = "{{ url_for('auth.login_page') }}";
     };
 
-    // Dodanie logiki dla nieaktywnych opcji (opcjonalnie, dla lepszego efektu)
+    // Logika dla nieaktywnych opcji
     document.querySelectorAll('.login-mockup .login-option').forEach(option => {
         if (option.id !== 'actualLoginBtn') {
             option.onclick = () => {
@@ -67,7 +60,5 @@
             };
         }
     });
-
-  </script>
-</body>
-</html>
+</script>
+{% endblock %}

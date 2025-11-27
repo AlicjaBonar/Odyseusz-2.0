@@ -4,23 +4,37 @@
     <meta charset="UTF-8">
     <title>{% block title %}Odyseusz 2.0{% endblock %}</title>
 
-    <!-- globalny CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     {% block head %}{% endblock %}
 </head>
 
 <body>
-    <div class="container">
+    <header class="site-header">
+        <div class="container header-content">
+            <span class="site-logo">Odyseusz 2.0</span>
+            <nav class="nav-menu">
+                <a href="/">Strona główna</a>
+                <a href="/">Powiadomienia</a>
+                <a href="/">Dashboard</a>
+                <a href="{{ url_for('auth.logout') }}">Wyloguj</a>
+            </nav>
+        </div>
+    </header>
 
+    <div class="container main-content">
         {% block content %}
-        <!-- tu wchodzi zawartość stron -->
         {% endblock %}
-
     </div>
 
+    <footer class="site-footer">
+        <div class="container footer-content">
+            <p>&copy; 2025 Odyseusz 2.0. Wszystkie prawa zastrzeżone.</p>
+            <p>Pod Twoją opieką – podróże bezpieczne i wygodne.</p>
+        </div>
+    </footer>
+
     {% block scripts %}
-    <!-- tu wchodzi JS stron -->
     {% endblock %}
 </body>
 </html>

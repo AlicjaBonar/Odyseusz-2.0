@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Moje podróże – Odyseusz 2.0{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Witaj, {{ traveler.first_name }}! Twoje Zarejestrowane Podróże</h2>
+    <p class="text-muted">Poniżej znajduje się lista wszystkich Twoich podróży zarejestrowanych w systemie Odyseusz 2.0.</p>
+
+    {% if not trips %}
+    <div class="alert alert-info" style="
+        padding: 20px; 
+        background-color: #e2f0ff; 
+        border: 1px solid #b8daff; 
+        border-radius: .25rem; 
+        margin-top: 30px;
+    ">
+        <h3>Brak podróży</h3>
+        <p>Nie masz obecnie zarejestrowanych żadnych podróży.</p>
+        <a href="{{ url_for('app_bp.register_trip_page') }}" class="btn" style="width: auto;">Zarejestruj nową podróż</a>
+    </div>
+
+    {% else %}
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID Podróży</th>
+                    <th>Status</th>
+                    <th>Liczba etapów</th>
+                    <th>Rozpoczęcie</th>
+                    <th>Zakończenie</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for trip in trips %}
+                <tr>
+                    <td>#{{ trip.id }}</td>
+                    <td>
+                        <span class="status-badge status-{{ trip.status.name | lower }}">
+                            {{ trip.status.value }}
+                        </span>
+                    </td>
+                    <td>{{ trip.stages | length }}</td>
+                    <td>
+                        {% if trip.stages %}
+                            {{ trip.stages[0].start_date.strftime('%d.%m.%Y') }}
+                        {% else %}
+                            Brak danych
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if trip.stages %}
+                            {% set last_stage = trip.stages | sort(attribute='end_date', reverse=true) | first %}
+                            {{ last_stage.end_date.strftime('%d.%m.%Y') }}
+                        {% else %}
+                            Brak danych
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/" 
+                           class="btn btn-secondary btn-sm" 
+                           style="width: auto; padding: 5px 10px;">
+                            Szczegóły
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="button-actions" style="margin-top: 30px; text-align: left;">
+        <a href="{{ url_for('app_bp.register_travel_page') }}" class="btn" style="width: auto;">+ Zarejestruj nową podróż</a>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block head %}
+<style>
+    /* Uniwersalne style dla tabel */
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        background-color: white;
+        text-align: left;
+    }
+
+    .data-table th, .data-table td {
+        padding: 12px 15px;
+        border: 1px solid #dee2e6;
+        vertical-align: middle;
+    }
+
+    .data-table th {
+        background-color: #e9ecef;
+        font-weight: 600;
+        color: var(--text-color-dark);
+    }
+    
+    .data-table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    /* Style dla statusów (Emulacja Enum TripStatus) */
+    .status-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: white;
+    }
+
+    /* TripStatus.PLANNED */
+    .status-planned {
+        background-color: #007bff; /* Primary Blue */
+    }
+
+    /* TripStatus.IN_PROGRESS */
+    .status-in_progress {
+        background-color: #ffc107; /* Warning Yellow */
+        color: #343a40;
+    }
+
+    /* TripStatus.COMPLETED */
+    .status-completed {
+        background-color: #28a745; /* Success Green */
+    }
+
+    /* TripStatus.EVACUATED */
+    .status-evacuated {
+        background-color: #dc3545; /* Danger Red */
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

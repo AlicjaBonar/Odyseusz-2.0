@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
+from flask import Blueprint, redirect, url_for, render_template
 from werkzeug.security import check_password_hash
-from flask_login import login_user
+from flask_login import login_user, logout_user
 from app.models import Traveler, Employee
 from app.database.database import SessionLocal
 
@@ -39,3 +40,13 @@ def login():
         "redirect_url": redirect_url,
         "role": role
     })
+
+
+@auth_bp.route("/login_page")
+def login_page():
+    return render_template("login.html")
+
+@auth_bp.route("/logout")
+def logout():
+    logout_user()  # Wylogowuje aktualnego użytkownika
+    return redirect(url_for('auth.login'))

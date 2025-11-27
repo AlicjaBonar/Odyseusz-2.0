@@ -4,52 +4,117 @@
 
 {% block head %}
 <style>
-    .stage { margin-bottom: 10px; }
-    .stage input { margin-right: 5px; }
-    #addCompanionLink { margin-top: 15px; }
+    /* Stylowanie lokalne – spójne z systemem */
+    .trip-card {
+        background: #fff;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: var(--shadow-soft);
+        margin-top: 20px;
+    }
+
+    .trip-card h2 {
+        margin-bottom: 20px;
+        font-size: 22px;
+    }
+
+    .input-field {
+        width: 100%;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        margin-bottom: 15px;
+        font-size: 15px;
+    }
+
+    select.input-field {
+        cursor: pointer;
+    }
+
+    .stage {
+        background: #f8f9fc;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        border: 1px solid #e2e6f0;
+    }
+
+    .stage input {
+        margin-bottom: 8px;
+    }
+
+    .removeStageBtn {
+        background: #e74c3c;
+        color: #fff;
+        border: none;
+        padding: 6px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-top: 5px;
+    }
+
+    .removeStageBtn:hover {
+        background: #c0392b;
+    }
+
+    #addStageBtn {
+        margin-top: 10px;
+        background: var(--primary-light);
+        color: var(--primary-dark);
+        border: none;
+        padding: 8px 14px;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    #addStageBtn:hover {
+        background: var(--primary);
+        color: #fff;
+    }
+
+    button[type="submit"] {
+        margin-top: 20px;
+    }
+
+    #tripMessage {
+        font-weight: bold;
+        padding-top: 10px;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<h2>Rejestracja podróży</h2>
+<div class="trip-card">
+    <h2>Rejestracja podróży</h2>
 
-<form id="tripForm">
-    <input type="text" name="traveler_pesel" placeholder="PESEL" required>
+    <form id="tripForm">
 
-    <label for="statusSelect">Status podróży:</label>
-    <select id="statusSelect" name="status" required>
-        <option value="planned">Planned</option>
-        <option value="in_progress">In Progress</option>
-        <option value="completed">Completed</option>
-    </select>
+        <input type="hidden" name="traveler_pesel" value="{{ traveler.pesel }}">
 
-    <h3>Etapy podróży</h3>
-    <div id="stagesContainer"></div>
-    <button type="button" id="addStageBtn">Dodaj etap</button>
+        <label>Status podróży:</label>
+        <select id="statusSelect" name="status" class="input-field" required>
+            <option value="planned">Planowana</option>
+            <option value="in_progress">W trakcie</option>
+            <option value="completed">Zakończona</option>
+        </select>
 
-    <br><br>
-    <button type="submit">Zarejestruj podróż</button>
-</form>
+        <h3>Etapy podróży</h3>
 
-<div id="tripMessage" style="margin-top: 10px;"></div>
-<div id="addCompanionLink"></div>
+        <div id="stagesContainer"></div>
 
-<hr>
+        <button type="button" id="addStageBtn" class="btn-secondary">+ Dodaj etap</button>
 
-<h2>Twoje podróże</h2>
-<input type="text" id="peselFilter" placeholder="Podaj PESEL">
-<button id="loadTripsBtn">Pokaż moje podróże</button>
+        <button type="submit" class="btn">Zarejestruj podróż</button>
+    </form>
 
-<ul id="tripsList"></ul>
+    <div id="tripMessage"></div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 const tripForm = document.getElementById('tripForm');
 const tripMessage = document.getElementById('tripMessage');
-const addCompanionLink = document.getElementById('addCompanionLink');
-const tripsList = document.getElementById('tripsList');
-const loadTripsBtn = document.getElementById('loadTripsBtn');
 const stagesContainer = document.getElementById('stagesContainer');
 const addStageBtn = document.getElementById('addStageBtn');
 
@@ -57,10 +122,10 @@ function addStage() {
     const div = document.createElement('div');
     div.className = 'stage';
     div.innerHTML = `
-        <input type="date" name="start_date" required>
-        <input type="date" name="end_date" required>
-        <input type="number" name="location_id" placeholder="Location ID" required>
-        <button type="button" class="removeStageBtn">Usuń</button>
+        <input type="date" name="start_date" class="input-field" required>
+        <input type="date" name="end_date" class="input-field" required>
+        <input type="number" name="location_id" class="input-field" placeholder="ID lokalizacji" required>
+        <button type="button" class="removeStageBtn">Usuń etap</button>
     `;
     stagesContainer.appendChild(div);
 
@@ -74,6 +139,7 @@ tripForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const formData = Object.fromEntries(new FormData(tripForm));
+
     const stages = [];
     stagesContainer.querySelectorAll('.stage').forEach(div => {
         const inputs = div.querySelectorAll('input');
@@ -99,41 +165,15 @@ tripForm.addEventListener('submit', async (e) => {
         const result = await res.json();
 
         if (res.ok) {
-            window.location.href = `/add_companions_to_travel?traveler_pesel=${formData.traveler_pesel}&trip_id=${result.id}`;
+            window.location.href =
+                `/add_companions_to_travel?traveler_pesel=${formData.traveler_pesel}&trip_id=${result.id}`;
         } else {
             tripMessage.textContent = `Błąd: ${result.error}`;
-        }
-            } catch (err) {
-                tripMessage.textContent = `Błąd sieci: ${err.message}`;
-            }
-        });
-
-loadTripsBtn.addEventListener('click', async () => {
-    const pesel = document.getElementById('peselFilter').value;
-    if (!pesel) {
-        alert("Podaj PESEL aby załadować podróże");
-        return;
-    }
-
-    try {
-        const res = await fetch(`/travelers/${pesel}/trips`);
-        const result = await res.json();
-        tripsList.innerHTML = '';
-
-        if (res.ok) {
-            result.trips.forEach(t => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    ID: ${t.id}, Status: ${t.status}, Etapy: ${t.stages.length} 
-                    - <a href="/trips/${t.id}/add_companions?traveler_pesel=${pesel}">Dodaj uczestników</a>
-                `;
-                tripsList.appendChild(li);
-            });
-        } else {
-            tripsList.innerHTML = `<li>Błąd: ${result.error}</li>`;
+            tripMessage.style.color = "red";
         }
     } catch (err) {
-        tripsList.innerHTML = `<li>Błąd sieci: ${err.message}</li>`;
+        tripMessage.textContent = `Błąd sieci: ${err.message}`;
+        tripMessage.style.color = "red";
     }
 });
 </script>
