@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, g
 from datetime import datetime
-from app.models import Trip, Traveler, Stage, Location, Evacuation, TripStatus  # TripStatus = Enum
+from app.models import Trip, Traveler, Stage, Location, Evacuation, TripStatus, Companion  # TripStatus = Enum
 
 trips_bp = Blueprint("trips", __name__)
 
@@ -210,3 +210,51 @@ def get_trips_by_pesel(traveler_pesel):
         "traveler_pesel": traveler.pesel,
         "trips": trips
     })
+
+@trips_bp.route("/trips/<int:trip_id>/companions", methods=["POST"])
+def add_companions_to_trip(trip_id):
+    data = request.get_json()
+
+    companions_data = data.get("companions", [])
+    traveler_pesel = data.get("traveler_pesel")
+
+    if not companions_data:
+        return jsonify({"error": "No companions provided"}), 400
+    if not traveler_pesel:
+        return jsonify({"error": "Missing traveler_pesel"}), 400
+
+    # Sprawdzenie istnienia tripu
+    trip = g.db.query(Trip).filter_by(id=trip_id).first()
+    if not trip:
+        return jsonify({"error": "Trip not found"}), 404
+
+    saved_companions = []
+
+    for comp in companions_data:
+        companion = Companion(
+            pesel=comp.get("pesel"),
+            first_name=comp.get("first_name"),
+            last_name=comp.get("last_name"),
+            age=comp.get("age"),
+            phone_number=comp.get("phone_number"),
+            email=comp.get("email"),
+            added_by_pesel=traveler_pesel
+        )
+
+        g.db.add(companion)
+        g.db.flush()  # żeby companion miał ID
+
+        trip.companions.append(companion)
+
+        saved_companions.append({
+            "id": companion.id,
+            "first_name": companion.first_name,
+            "last_name": companion.last_name
+        })
+
+    g.db.commit()
+
+    return jsonify({
+        "message": f"Added {len(saved_companions)} companions to trip",
+        "companions": saved_companions
+    }), 201

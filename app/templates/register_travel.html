@@ -1,45 +1,49 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <title>Rejestracja podróży – Odyseusz 2.0</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <style>
-        .stage { margin-bottom: 10px; }
-        .stage input { margin-right: 5px; }
-        #addCompanionLink { margin-top: 15px; }
-    </style>
-</head>
-<body>
-<div class="container">
-    <h2>Rejestracja podróży</h2>
-    <form id="tripForm">
-        <input type="text" name="traveler_pesel" placeholder="PESEL" required>
-        <label for="statusSelect">Status podróży:</label>
-        <select id="statusSelect" name="status" required>
-            <option value="planned">Planned</option>
-            <option value="in_progress">In Progress</option>
-            <option value="completed">Completed</option>
-        </select>
+{% extends "base.html" %}
 
-        <h3>Etapy podróży</h3>
-        <div id="stagesContainer"></div>
-        <button type="button" id="addStageBtn">Dodaj etap</button>
+{% block title %}Rejestracja podróży – Odyseusz 2.0{% endblock %}
 
-        <br><br>
-        <button type="submit">Zarejestruj podróż</button>
-    </form>
+{% block head %}
+<style>
+    .stage { margin-bottom: 10px; }
+    .stage input { margin-right: 5px; }
+    #addCompanionLink { margin-top: 15px; }
+</style>
+{% endblock %}
 
-    <div id="tripMessage" style="margin-top: 10px;"></div>
-    <div id="addCompanionLink"></div>
+{% block content %}
+<h2>Rejestracja podróży</h2>
 
-    <hr>
-    <h2>Twoje podróże</h2>
-    <input type="text" id="peselFilter" placeholder="Podaj PESEL">
-    <button id="loadTripsBtn">Pokaż moje podróże</button>
-    <ul id="tripsList"></ul>
-</div>
+<form id="tripForm">
+    <input type="text" name="traveler_pesel" placeholder="PESEL" required>
 
+    <label for="statusSelect">Status podróży:</label>
+    <select id="statusSelect" name="status" required>
+        <option value="planned">Planned</option>
+        <option value="in_progress">In Progress</option>
+        <option value="completed">Completed</option>
+    </select>
+
+    <h3>Etapy podróży</h3>
+    <div id="stagesContainer"></div>
+    <button type="button" id="addStageBtn">Dodaj etap</button>
+
+    <br><br>
+    <button type="submit">Zarejestruj podróż</button>
+</form>
+
+<div id="tripMessage" style="margin-top: 10px;"></div>
+<div id="addCompanionLink"></div>
+
+<hr>
+
+<h2>Twoje podróże</h2>
+<input type="text" id="peselFilter" placeholder="Podaj PESEL">
+<button id="loadTripsBtn">Pokaż moje podróże</button>
+
+<ul id="tripsList"></ul>
+{% endblock %}
+
+{% block scripts %}
 <script>
 const tripForm = document.getElementById('tripForm');
 const tripMessage = document.getElementById('tripMessage');
@@ -64,7 +68,7 @@ function addStage() {
 }
 
 addStageBtn.addEventListener('click', addStage);
-addStage(); // dodaj pierwszy etap domyślnie
+addStage(); // domyślny etap
 
 tripForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -98,9 +102,8 @@ tripForm.addEventListener('submit', async (e) => {
             tripMessage.textContent = `Podróż zarejestrowana! ID: ${result.id}, Status: ${result.status}`;
             tripForm.reset();
             stagesContainer.innerHTML = '';
-            addStage(); // pierwszy etap po restarcie
+            addStage();
 
-            // Wyświetl link do dodawania companionów
             addCompanionLink.innerHTML = `
                 <a href="/add_companions_to_travel?traveler_pesel=${formData.traveler_pesel}">
                     Dodaj uczestników do tej wycieczki
@@ -114,7 +117,6 @@ tripForm.addEventListener('submit', async (e) => {
     }
 });
 
-// Pobieranie podróży
 loadTripsBtn.addEventListener('click', async () => {
     const pesel = document.getElementById('peselFilter').value;
     if (!pesel) {
@@ -144,5 +146,4 @@ loadTripsBtn.addEventListener('click', async () => {
     }
 });
 </script>
-</body>
-</html>
+{% endblock %}
