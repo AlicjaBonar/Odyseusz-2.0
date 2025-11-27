@@ -1,73 +1,67 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <title>Logowanie do Systemu Odyseusz</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <div class="login-box">
-            <h2>Logowanie do systemu Odyseusz</h2>
-            <p>Proszę podać dane dostępowe.</p>
-            
-            <form id="loginForm">
-                <input type="text" name="login" placeholder="Login" required>
-                <input type="password" name="password" placeholder="Hasło" required>
-                <button type="submit">Zaloguj</button>
-            </form>
-            <div id="message"></div>
+{% extends "base.html" %}
 
-            <hr>
-            
-            <div class="buttons">
-                <button class="neutral-button" id="registerTravelerBtn">Zarejestruj podróżnego</button>
-                <button class="neutral-button" id="registerEmployeeBtn">Zarejestruj pracownika (admin)</button>
-            </div>
-        </div>
+{% block title %}Logowanie – Odyseusz 2.0{% endblock %}
+
+{% block content %}
+<div class="login-box">
+    <h2>Logowanie do systemu Odyseusz</h2>
+    <p>Proszę podać dane dostępowe.</p>
+    
+    <form id="loginForm">
+        <input type="text" name="login" placeholder="Login" required>
+        <input type="password" name="password" placeholder="Hasło" required>
+        <button type="submit">Zaloguj</button>
+    </form>
+    <div id="message"></div>
+
+    <hr>
+    
+    <div class="buttons">
+        <button class="neutral-button" id="registerTravelerBtn">Zarejestruj podróżnego</button>
+        <button class="neutral-button" id="registerEmployeeBtn">Zarejestruj pracownika (admin)</button>
     </div>
+</div>
+{% endblock %}
 
-    <script>
-    const form = document.getElementById('loginForm');
+{% block scripts %}
+<script>
+const form = document.getElementById('loginForm');
 
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault(); // Zapobiega przeładowaniu strony
-        const data = Object.fromEntries(new FormData(form));
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(form));
 
-        // Wysyłanie danych do backendu
+    try {
         const res = await fetch('/login', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(data)
         });
 
-        // --- TUTAJ JEST ZMIANA ---
+        const result = await res.json();
 
         if (res.ok) {
-            // Jeśli logowanie udane (kod 200)
-            const result = await res.json();
-
+            // Jeśli logowanie udane, przekierowanie zależne od roli
             if (result.redirect_url) {
-                // Przekieruj na dashboard
                 window.location.href = result.redirect_url;
             } else {
-                // Fallback (np. dla admina lub gdy brak URL)
                 document.getElementById('message').textContent = result.message;
             }
         } else {
-            // Jeśli błąd (kod 401, 400 itp.)
-            const result = await res.json();
+            // Błąd logowania
             document.getElementById('message').textContent = result.error || "Błąd logowania";
         }
-    });
+    } catch (err) {
+        document.getElementById('message').textContent = `Błąd sieci: ${err.message}`;
+    }
+});
 
-    // Obsługa przycisków rejestracji (pozostaje bez zmian)
-    document.getElementById('registerTravelerBtn').onclick = () => {
-        location.href = "{{ url_for('app_bp.register_traveler_page') }}";
-    };
-    document.getElementById('registerEmployeeBtn').onclick = () => {
-        location.href = "{{ url_for('app_bp.register_employee_page') }}";
-    };
+// Przyciski do rejestracji
+document.getElementById('registerTravelerBtn').onclick = () => {
+    window.location.href = "{{ url_for('app_bp.register_traveler_page') }}";
+};
+document.getElementById('registerEmployeeBtn').onclick = () => {
+    window.location.href = "{{ url_for('app_bp.register_employee_page') }}";
+};
 </script>
-</body>
-</html>
+{% endblock %}

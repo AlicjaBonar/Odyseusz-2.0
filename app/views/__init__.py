@@ -5,7 +5,7 @@ from .home import home_bp
 from .employees import employees_bp
 from .login import auth_bp
 from .app import app_bp
-from .routes import notifications_bp
+from .notifications import notifications_bp
 from .stages import stages_bp
 from .companions import companions_bp
 

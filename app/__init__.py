@@ -2,8 +2,12 @@ from flask import Flask, g
 from app.database.database import SessionLocal, engine, Base
 from sqlalchemy.exc import SQLAlchemyError
 from flask_wtf import CSRFProtect
+from flask_login import LoginManager
+from app.models import Traveler, Employee
+from app.database.database import SessionLocal
 
 csrf = CSRFProtect()
+login_manager = LoginManager()
 
 def create_app():
     print("Initializing Flask application...")
@@ -11,7 +15,19 @@ def create_app():
     app.config['SECRET_KEY'] = 'supersekretnyklucz123'
 
     csrf.init_app(app)
+    login_manager.login_view = "auth.login_page"
 
+    @login_manager.user_loader
+    def load_user(user_id):
+        db = SessionLocal()
+        user = db.query(Traveler).filter_by(pesel=user_id).first()
+        if user:
+            return user
+        user = db.query(Employee).filter_by(login=user_id).first()
+        return user
+    
+    login_manager.init_app(app)
+    
     # Tworzenie tabel (jeśli nie istnieją)
     try:
         Base.metadata.create_all(bind=engine)

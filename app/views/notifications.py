@@ -1,12 +1,34 @@
-# app/views/routes.py
+# app/views/notifications.py
 from flask import Blueprint, request, jsonify, g, render_template, url_for
 from sqlalchemy import and_
 from datetime import datetime
 from app.models import Evacuation, EvacuationArea, City, Traveler, Trip, Stage, Location, Notification
+from flask_login import login_required, current_user
 
 # Tworzymy Blueprint
 notifications_bp = Blueprint('notifications', __name__)
 
+@notifications_bp.route('/notifications/all', methods=['GET'])
+def get_all_notifications():
+    """
+    Zwraca wszystkie powiadomienia w systemie.
+    """
+    db = g.db  # scoped_session ze 'before_request'
+
+    notifications = db.query(Notification).order_by(Notification.created_at.desc()).all()
+
+    result = []
+    for n in notifications:
+        result.append({
+            "id": n.id,
+            "traveler_pesel": n.traveler_pesel,  # lub login/pesel, jeśli wolisz
+            "message": n.message,
+            "is_read": n.is_read,
+            "created_at": n.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        })
+
+    # Relacja
+    return jsonify(result), 200
 
 # --- ENDPOINT 1: Admin ogłasza ewakuację (Backend) ---
 @notifications_bp.route('/evacuations', methods=['POST'])
@@ -92,10 +114,12 @@ def traveler_dashboard(pesel):
 
 
 # --- ENDPOINT 4: Widok strony powiadomień (Widok HTML) ---
-@notifications_bp.route('/notifications_page/<pesel>')
-def notifications_page(pesel):
+
+@notifications_bp.route('/notifications_page')
+@login_required
+def notifications_page():
     # Pobieramy dane podróżnego na podstawie PESELu
-    traveler = g.db.query(Traveler).filter(Traveler.pesel == pesel).first()
+    traveler = current_user
 
     if not traveler:
         return "Nie znaleziono użytkownika", 404

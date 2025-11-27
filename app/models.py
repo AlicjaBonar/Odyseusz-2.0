@@ -4,6 +4,7 @@ from app.database.database import Base  # Importujemy Base
 from sqlalchemy import Boolean, Table
 from datetime import datetime
 from enum import Enum as PyEnum
+from flask_login import UserMixin
 
 class TripStatus(PyEnum):
     PLANNED = "planned"
@@ -36,9 +37,9 @@ class Consulate(Base):
     country = relationship("Country", back_populates="consulates")
     employees = relationship("Employee", back_populates="consulate")
 
-class Employee(Base):
+class Employee(UserMixin, Base):
     __tablename__ = "employees"
-    pesel = Column(String, primary_key=True, index=True)
+    pesel = Column(String, unique=True, index=True, nullable=False)
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     age = Column(Integer)
@@ -47,12 +48,15 @@ class Employee(Base):
     passport_number = Column(String, unique=True)
     id_card_number = Column(String, unique=True)
     role = Column(String, nullable=False)
-    login = Column(String, unique=True, nullable=False)
+    login = Column(String, primary_key=True)
     password_hash = Column(String, nullable=False)
 
     consulate_id = Column(Integer, ForeignKey("consulates.id"))
 
     consulate = relationship("Consulate", back_populates="employees")
+
+    def get_id(self):
+        return self.login
 
 class City(Base):
     __tablename__ = "cities"
@@ -98,7 +102,7 @@ class Companion(Base):
         back_populates="companions"
     )
 
-class Traveler(Base):
+class Traveler(UserMixin, Base):
     __tablename__ = "travelers"
     pesel = Column(String, primary_key=True, index=True)
     first_name = Column(String, nullable=False)
@@ -113,6 +117,9 @@ class Traveler(Base):
 
     trips = relationship("Trip", back_populates="traveler")
     companions = relationship("Companion", back_populates="added_by_traveler")
+
+    def get_id(self):
+        return self.pesel
 
 class Evacuation(Base):
     __tablename__ = "evacuations"

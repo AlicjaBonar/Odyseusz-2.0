@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, g
 from app.models import Trip
+from flask_login import login_required, current_user
 
 app_bp = Blueprint("app_bp", __name__)
 
@@ -50,5 +51,11 @@ def thanks_register_travel_page():
     return render_template("thanks_for_registering_trip.html")
 
 @app_bp.route("/traveler_dashboard")
+@login_required  # chroni stronę, wymaga zalogowania
 def traveler_dashboard():
-    return "<h1>Under Construction 🚧</h1><p>Panel podróżnego jest w trakcie tworzenia. Prosimy o cierpliwość.</p>"
+    # current_user to obiekt Traveler lub Employee, w tym przypadku spodziewamy się Traveler
+    traveler = current_user
+
+    # przekazujemy do szablonu dashboard.html
+    return render_template("dashboard.html", traveler=traveler)
+    # return "<h1>Under Construction 🚧</h1><p>Panel podróżnego jest w trakcie tworzenia. Prosimy o cierpliwość.</p>"
