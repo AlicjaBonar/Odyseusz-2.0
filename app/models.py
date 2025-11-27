@@ -1,9 +1,22 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Enum
 from sqlalchemy.orm import relationship
 from app.database.database import Base  # Importujemy Base
-from sqlalchemy import Boolean
+from sqlalchemy import Boolean, Table
 from datetime import datetime
+from enum import Enum as PyEnum
 
+class TripStatus(PyEnum):
+    PLANNED = "planned"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+
+
+trip_companion_association = Table(
+    "trip_companion",
+    Base.metadata,
+    Column("trip_id", Integer, ForeignKey("trips.id"), primary_key=True),
+    Column("companion_id", Integer, ForeignKey("companions.id"), primary_key=True)
+)
 
 class Country(Base):
     __tablename__ = "countries"
@@ -64,6 +77,27 @@ class Location(Base):
     city = relationship("City", back_populates="locations")
     stages = relationship("Stage", back_populates="location")
 
+class Companion(Base):
+    __tablename__ = 'companions'
+    id = Column(Integer, primary_key=True, index=True)
+    pesel = Column(String, nullable=False)
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    age = Column(Integer)
+    phone_number = Column(String)
+    email = Column(String)
+    passport_number = Column(String)
+    id_card_number = Column(String)
+
+    added_by_pesel = Column(String, ForeignKey('travelers.pesel'), nullable=False)
+    added_by_traveler = relationship("Traveler", back_populates="companions")
+
+    trips = relationship(
+        "Trip",
+        secondary=trip_companion_association,
+        back_populates="companions"
+    )
+
 class Traveler(Base):
     __tablename__ = "travelers"
     pesel = Column(String, primary_key=True, index=True)
@@ -78,6 +112,7 @@ class Traveler(Base):
     password_hash = Column(String, nullable=False)
 
     trips = relationship("Trip", back_populates="traveler")
+    companions = relationship("Companion", back_populates="added_by_traveler")
 
 class Evacuation(Base):
     __tablename__ = "evacuations"
@@ -103,7 +138,7 @@ class EvacuationArea(Base):
 class Trip(Base):
     __tablename__ = "trips"
     id = Column(Integer, primary_key=True, index=True)
-    status = Column(String)
+    status = Column(Enum(TripStatus), nullable=False, default=TripStatus.PLANNED)
 
     traveler_pesel = Column(String, ForeignKey("travelers.pesel"))
     evacuation_id = Column(Integer, ForeignKey("evacuations.id"), nullable=True)
@@ -111,6 +146,12 @@ class Trip(Base):
     traveler = relationship("Traveler", back_populates="trips")
     evacuation = relationship("Evacuation", back_populates="trips")
     stages = relationship("Stage", back_populates="trip")
+
+    companions = relationship(
+        "Companion",
+        secondary=trip_companion_association,
+        back_populates="trips"
+    )
 
 class Stage(Base):
     __tablename__ = "stages"

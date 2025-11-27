@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Rejestracja podróży – Odyseusz 2.0</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .stage { margin-bottom: 10px; }
+        .stage input { margin-right: 5px; }
+        #addCompanionLink { margin-top: 15px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Rejestracja podróży</h2>
+    <form id="tripForm">
+        <input type="text" name="traveler_pesel" placeholder="PESEL" required>
+        <label for="statusSelect">Status podróży:</label>
+        <select id="statusSelect" name="status" required>
+            <option value="planned">Planned</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+        </select>
+
+        <h3>Etapy podróży</h3>
+        <div id="stagesContainer"></div>
+        <button type="button" id="addStageBtn">Dodaj etap</button>
+
+        <br><br>
+        <button type="submit">Zarejestruj podróż</button>
+    </form>
+
+    <div id="tripMessage" style="margin-top: 10px;"></div>
+    <div id="addCompanionLink"></div>
+
+    <hr>
+    <h2>Twoje podróże</h2>
+    <input type="text" id="peselFilter" placeholder="Podaj PESEL">
+    <button id="loadTripsBtn">Pokaż moje podróże</button>
+    <ul id="tripsList"></ul>
+</div>
+
+<script>
+const tripForm = document.getElementById('tripForm');
+const tripMessage = document.getElementById('tripMessage');
+const addCompanionLink = document.getElementById('addCompanionLink');
+const tripsList = document.getElementById('tripsList');
+const loadTripsBtn = document.getElementById('loadTripsBtn');
+const stagesContainer = document.getElementById('stagesContainer');
+const addStageBtn = document.getElementById('addStageBtn');
+
+function addStage() {
+    const div = document.createElement('div');
+    div.className = 'stage';
+    div.innerHTML = `
+        <input type="date" name="start_date" required>
+        <input type="date" name="end_date" required>
+        <input type="number" name="location_id" placeholder="Location ID" required>
+        <button type="button" class="removeStageBtn">Usuń</button>
+    `;
+    stagesContainer.appendChild(div);
+
+    div.querySelector('.removeStageBtn').addEventListener('click', () => div.remove());
+}
+
+addStageBtn.addEventListener('click', addStage);
+addStage(); // dodaj pierwszy etap domyślnie
+
+tripForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = Object.fromEntries(new FormData(tripForm));
+    const stages = [];
+    stagesContainer.querySelectorAll('.stage').forEach(div => {
+        const inputs = div.querySelectorAll('input');
+        stages.push({
+            start_date: inputs[0].value,
+            end_date: inputs[1].value,
+            location_id: parseInt(inputs[2].value)
+        });
+    });
+
+    const payload = {
+        traveler_pesel: formData.traveler_pesel,
+        status: formData.status,
+        stages: stages
+    };
+
+    try {
+        const res = await fetch('/trips', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+
+        if (res.ok) {
+            tripMessage.textContent = `Podróż zarejestrowana! ID: ${result.id}, Status: ${result.status}`;
+            tripForm.reset();
+            stagesContainer.innerHTML = '';
+            addStage(); // pierwszy etap po restarcie
+
+            // Wyświetl link do dodawania companionów
+            addCompanionLink.innerHTML = `
+                <a href="/add_companions_to_travel?traveler_pesel=${formData.traveler_pesel}">
+                    Dodaj uczestników do tej wycieczki
+                </a>
+            `;
+        } else {
+            tripMessage.textContent = `Błąd: ${result.error}`;
+        }
+    } catch (err) {
+        tripMessage.textContent = `Błąd sieci: ${err.message}`;
+    }
+});
+
+// Pobieranie podróży
+loadTripsBtn.addEventListener('click', async () => {
+    const pesel = document.getElementById('peselFilter').value;
+    if (!pesel) {
+        alert("Podaj PESEL aby załadować podróże");
+        return;
+    }
+
+    try {
+        const res = await fetch(`/travelers/${pesel}/trips`);
+        const result = await res.json();
+        tripsList.innerHTML = '';
+
+        if (res.ok) {
+            result.trips.forEach(t => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    ID: ${t.id}, Status: ${t.status}, Etapy: ${t.stages.length} 
+                    - <a href="/trips/${t.id}/add_companions?traveler_pesel=${pesel}">Dodaj uczestników</a>
+                `;
+                tripsList.appendChild(li);
+            });
+        } else {
+            tripsList.innerHTML = `<li>Błąd: ${result.error}</li>`;
+        }
+    } catch (err) {
+        tripsList.innerHTML = `<li>Błąd sieci: ${err.message}</li>`;
+    }
+});
+</script>
+</body>
+</html>

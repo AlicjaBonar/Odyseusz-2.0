@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Dodawanie uczestników – Odyseusz 2.0</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .companion { margin-bottom: 10px; }
+        .companion input { margin-right: 5px; }
+        #companionsContainer { margin-top: 10px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Dodawanie uczestników do podróży</h2>
+
+    <p>Czy chcesz dodać innych uczestników do wycieczki?</p>
+    <button id="yesBtn">Tak</button>
+    <button id="noBtn">Nie</button>
+
+    <form id="companionsForm" style="display: none;">
+        <h3>Dodaj uczestników</h3>
+        <div id="companionsContainer"></div>
+        <button type="button" id="addCompanionBtn">Dodaj uczestnika</button>
+        <br><br>
+        <button type="submit">Zapisz uczestników</button>
+    </form>
+
+    <div id="message"></div>
+</div>
+
+<script>
+// Trip i podróżny przekazane z backendu
+const tripId = "{{ trip_id }}";
+const travelerPesel = "{{ traveler_pesel }}";
+
+const yesBtn = document.getElementById('yesBtn');
+const noBtn = document.getElementById('noBtn');
+const companionsForm = document.getElementById('companionsForm');
+const companionsContainer = document.getElementById('companionsContainer');
+const addCompanionBtn = document.getElementById('addCompanionBtn');
+const message = document.getElementById('message');
+
+yesBtn.addEventListener('click', () => {
+    companionsForm.style.display = 'block';
+});
+noBtn.addEventListener('click', () => {
+    companionsForm.style.display = 'none';
+    message.textContent = "Nie dodano dodatkowych uczestników.";
+});
+
+// Dodawanie nowego uczestnika
+function addCompanion() {
+    const div = document.createElement('div');
+    div.className = 'companion';
+    div.innerHTML = `
+        <input type="text" name="first_name" placeholder="Imię" required>
+        <input type="text" name="last_name" placeholder="Nazwisko" required>
+        <input type="text" name="pesel" placeholder="PESEL">
+        <input type="number" name="age" placeholder="Wiek">
+        <input type="text" name="phone_number" placeholder="Telefon">
+        <input type="email" name="email" placeholder="Email">
+        <button type="button" class="removeBtn">Usuń</button>
+    `;
+    companionsContainer.appendChild(div);
+
+    div.querySelector('.removeBtn').addEventListener('click', () => div.remove());
+}
+
+addCompanionBtn.addEventListener('click', addCompanion);
+
+// Obsługa wysyłki formularza
+companionsForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const companions = [];
+    companionsContainer.querySelectorAll('.companion').forEach(div => {
+        const inputs = div.querySelectorAll('input');
+        companions.push({
+            first_name: inputs[0].value,
+            last_name: inputs[1].value,
+            pesel: inputs[2].value,
+            age: inputs[3].value ? parseInt(inputs[3].value) : null,
+            phone_number: inputs[4].value,
+            email: inputs[5].value
+        });
+    });
+
+    if (companions.length === 0) {
+        message.textContent = "Nie dodano żadnych uczestników.";
+        return;
+    }
+
+    try {
+        const res = await fetch(`/trips/${tripId}/companions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ companions, traveler_pesel: travelerPesel })
+        });
+        const result = await res.json();
+        if (res.ok) {
+            message.textContent = `Dodano ${companions.length} uczestników do wycieczki!`;
+            companionsForm.reset();
+            companionsContainer.innerHTML = '';
+        } else {
+            message.textContent = `Błąd: ${result.error}`;
+        }
+    } catch (err) {
+        message.textContent = `Błąd sieci: ${err.message}`;
+    }
+});
+</script>
+</body>
+</html>

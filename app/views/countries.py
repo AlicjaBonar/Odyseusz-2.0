@@ -52,3 +52,17 @@ def get_country_with_cities(country_id):
 
     cities = [{"id": c.id, "name": c.name} for c in country.cities]
     return jsonify({"id": country.id, "name": country.name, "cities": cities})
+
+@countries_bp.route("/countries", methods=["GET"])
+def get_all_countries():
+    countries = g.db.query(Country).all()
+    result = []
+    for country in countries:
+        result.append({
+            "id": country.id,
+            "name": country.name,
+            "cities": [{"id": c.id, "name": c.name} for c in country.cities]
+        })
+        print("nazwa", country.name )
+    return jsonify(result)
+
