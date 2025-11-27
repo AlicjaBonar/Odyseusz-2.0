@@ -26,7 +26,8 @@ def register_travel_page():
 @app_bp.route("/add_companions_to_travel")
 def add_companions_to_travel_page():
     # Pobieramy tylko pesel z query parameters
-    traveler_pesel = request.args.get("traveler_pesel")
+    traveler = current_user
+    traveler_pesel = traveler.pesel
     if not traveler_pesel:
         return "Brak traveler_pesel w URL", 400
 
@@ -35,7 +36,6 @@ def add_companions_to_travel_page():
         .filter_by(traveler_pesel=traveler_pesel)\
         .order_by(Trip.id.desc())\
         .first()
-    print(traveler_pesel)
     if not latest_trip:
         return f"Nie znaleziono podróży dla podróżnego {traveler_pesel}", 404
 
