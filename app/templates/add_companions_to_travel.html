@@ -1,34 +1,36 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <title>Dodawanie uczestników – Odyseusz 2.0</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <style>
-        .companion { margin-bottom: 10px; }
-        .companion input { margin-right: 5px; }
-        #companionsContainer { margin-top: 10px; }
-    </style>
-</head>
-<body>
-<div class="container">
-    <h2>Dodawanie uczestników do podróży</h2>
+{% extends "base.html" %}
 
-    <p>Czy chcesz dodać innych uczestników do wycieczki?</p>
-    <button id="yesBtn">Tak</button>
-    <button id="noBtn">Nie</button>
+{% block title %}Dodawanie uczestników – Odyseusz 2.0{% endblock %}
 
-    <form id="companionsForm" style="display: none;">
-        <h3>Dodaj uczestników</h3>
-        <div id="companionsContainer"></div>
-        <button type="button" id="addCompanionBtn">Dodaj uczestnika</button>
-        <br><br>
-        <button type="submit">Zapisz uczestników</button>
-    </form>
+{% block head %}
+<style>
+    .companion { margin-bottom: 10px; }
+    .companion input { margin-right: 5px; }
+    #companionsContainer { margin-top: 10px; }
+</style>
+{% endblock %}
 
-    <div id="message"></div>
-</div>
+{% block content %}
+<h2>Dodawanie uczestników do podróży</h2>
 
+<p id="question">Czy chcesz dodać innych uczestników do wycieczki?</p>
+<button id="yesBtn">Tak</button>
+<button id="noBtn">Nie</button>
+
+<form id="companionsForm" style="display: none;">
+    <h3>Dodaj uczestników</h3>
+    <div id="companionsContainer"></div>
+    <button type="button" id="addCompanionBtn">Dodaj uczestnika</button>
+    <br><br>
+    <button type="submit">Zapisz uczestników</button>
+    <br><br>
+    <button type="button" id="cancelBtn">Anuluj dodawanie uczestniów</button>
+</form>
+
+<div id="message"></div>
+{% endblock %}
+
+{% block scripts %}
 <script>
 // Trip i podróżny przekazane z backendu
 const tripId = "{{ trip_id }}";
@@ -36,17 +38,31 @@ const travelerPesel = "{{ traveler_pesel }}";
 
 const yesBtn = document.getElementById('yesBtn');
 const noBtn = document.getElementById('noBtn');
+const cancelBtn = document.getElementById('cancelBtn');
 const companionsForm = document.getElementById('companionsForm');
 const companionsContainer = document.getElementById('companionsContainer');
 const addCompanionBtn = document.getElementById('addCompanionBtn');
 const message = document.getElementById('message');
+const question = document.getElementById('question');
 
+// Pokazanie formularza po kliknięciu "Tak"
 yesBtn.addEventListener('click', () => {
     companionsForm.style.display = 'block';
+    question.style.display = 'none';
+    yesBtn.style.display = 'none';
+    noBtn.style.display = 'none';
 });
+
+// Przekierowanie po kliknięciu "Nie"
 noBtn.addEventListener('click', () => {
     companionsForm.style.display = 'none';
-    message.textContent = "Nie dodano dodatkowych uczestników.";
+    window.location.href = "/thanks_for_registering_trip";
+});
+
+// Przycisk anulowania formularza
+cancelBtn.addEventListener('click', () => {
+    companionsForm.style.display = 'none';
+    window.location.href = "/thanks_for_registering_trip";
 });
 
 // Dodawanie nowego uczestnika
@@ -96,11 +112,11 @@ companionsForm.addEventListener('submit', async (e) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ companions, traveler_pesel: travelerPesel })
         });
+
         const result = await res.json();
+
         if (res.ok) {
-            message.textContent = `Dodano ${companions.length} uczestników do wycieczki!`;
-            companionsForm.reset();
-            companionsContainer.innerHTML = '';
+            window.location.href = "/thanks_for_registering_trip";
         } else {
             message.textContent = `Błąd: ${result.error}`;
         }
@@ -109,5 +125,4 @@ companionsForm.addEventListener('submit', async (e) => {
     }
 });
 </script>
-</body>
-</html>
+{% endblock %}

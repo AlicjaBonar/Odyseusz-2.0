@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Dziękujemy – Odyseusz 2.0{% endblock %}
+
+{% block head %}
+<style>
+    .thank-you-container {
+        text-align: center;
+        margin-top: 50px;
+    }
+    .thank-you-container h1 {
+        font-size: 2.5em;
+        margin-bottom: 20px;
+    }
+    .thank-you-container p {
+        font-size: 1.2em;
+        margin-bottom: 30px;
+    }
+    .thank-you-container a {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+    }
+    .thank-you-container a:hover {
+        background-color: #0056b3;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="thank-you-container">
+    <h1>Dziękujemy za dodanie podróży!</h1>
+    <p>Twoja podróż została zarejestrowana w systemie Odyseusz 2.0.<br>
+       Podczas całego wyjazdu będziesz pod naszą opieką, a wszystkie etapy podróży zostaną odpowiednio monitorowane.</p>
+    <a href="/traveler_dashboard">Przejdź do panelu podróżnego</a>
+</div>
+{% endblock %}

@@ -99,23 +99,14 @@ tripForm.addEventListener('submit', async (e) => {
         const result = await res.json();
 
         if (res.ok) {
-            tripMessage.textContent = `Podróż zarejestrowana! ID: ${result.id}, Status: ${result.status}`;
-            tripForm.reset();
-            stagesContainer.innerHTML = '';
-            addStage();
-
-            addCompanionLink.innerHTML = `
-                <a href="/add_companions_to_travel?traveler_pesel=${formData.traveler_pesel}">
-                    Dodaj uczestników do tej wycieczki
-                </a>
-            `;
+            window.location.href = `/add_companions_to_travel?traveler_pesel=${formData.traveler_pesel}&trip_id=${result.id}`;
         } else {
             tripMessage.textContent = `Błąd: ${result.error}`;
         }
-    } catch (err) {
-        tripMessage.textContent = `Błąd sieci: ${err.message}`;
-    }
-});
+            } catch (err) {
+                tripMessage.textContent = `Błąd sieci: ${err.message}`;
+            }
+        });
 
 loadTripsBtn.addEventListener('click', async () => {
     const pesel = document.getElementById('peselFilter').value;

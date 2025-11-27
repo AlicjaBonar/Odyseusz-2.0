@@ -44,3 +44,11 @@ def add_companions_to_travel_page():
         trip_id=latest_trip.id,
         traveler_pesel=traveler_pesel
     )
+
+@app_bp.route("/thanks_for_registering_trip")
+def thanks_register_travel_page():
+    return render_template("thanks_for_registering_trip.html")
+
+@app_bp.route("/traveler_dashboard")
+def traveler_dashboard():
+    return "<h1>Under Construction 🚧</h1><p>Panel podróżnego jest w trakcie tworzenia. Prosimy o cierpliwość.</p>"
