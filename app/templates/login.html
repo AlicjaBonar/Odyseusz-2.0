@@ -4,53 +4,26 @@
 
 {% block content %}
 <div class="login-container">
-    <h2>Logowanie do systemu Odyseusz</h2>
-    <p class="lead-text" style="margin-bottom: 2rem;">Proszę podać dane dostępowe, aby kontynuować.</p>
-    
-    <form id="loginForm" class="login-form" style="text-align: left; margin-bottom: 2rem;">
-        <div class="form-group">
-            <input type="text" name="login" placeholder="Login" class="form-control" required aria-label="Login">
-        </div>
-        <div class="form-group">
-            <input type="password" name="password" placeholder="Hasło" class="form-control" required aria-label="Hasło">
-        </div>
-                <button type="submit" class="btn" style="width: 100%; margin-top: 1rem;">Zaloguj</button>
-    </form>
+    <h2>Logowanie do systemu Odyseusz</h2>
+    <p>Proszę podać dane dostępowe.</p>
+    
+    <form id="loginForm" class="login-form">
+        <div class="form-group">
+            <input type="text" name="login" placeholder="Login" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <input type="password" name="password" placeholder="Hasło" class="form-control" required>
+        </div>
+        <button type="submit" class="btn">Zaloguj</button>
+    </form>
+    <div id="message"></div>
 
-        <div id="message" style="
-        font-size: 0.9375rem; 
-        color: var(--danger); /* Użycie zmiennej danger z CSS */
-        font-weight: 600;
-        margin-bottom: 1rem;
-    "></div>
-
-        <hr style="
-        border: none; 
-        border-top: 1px solid var(--gray-200); 
-        margin: 2rem 0;
-    ">
-    
-        <div class="btn-group-vertical" style="
-        display: flex; 
-        flex-direction: column; 
-        gap: 0.75rem; 
-        width: 100%; 
-        max-width: 320px; /* Ograniczenie szerokości grupy przycisków */
-        margin: 0 auto;
-    ">
-        <button id="registerTravelerBtn" class="btn" style="
-            background: var(--white); 
-            color: var(--text-primary); 
-            border: 1px solid var(--gray-300); 
-            box-shadow: var(--shadow-sm);
-        ">Zarejestruj podróżnego</button>
-        <button id="registerEmployeeBtn" class="btn" style="
-            background: var(--white); 
-            color: var(--text-primary); 
-            border: 1px solid var(--gray-300); 
-            box-shadow: var(--shadow-sm);
-        ">Zarejestruj pracownika (admin)</button>
-    </div>
+    <hr>
+    
+    <div class="btn-group-vertical">
+        <button class="btn btn-secondary" id="registerTravelerBtn">Zarejestruj podróżnego</button>
+        <button class="btn btn-secondary" id="registerEmployeeBtn">Zarejestruj pracownika (admin)</button>
+    </div>
 </div>
 {% endblock %}
 
@@ -59,61 +32,40 @@
 const form = document.getElementById('loginForm');
 
 form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(form));
-    const messageElement = document.getElementById('message');
-    messageElement.textContent = ''; // Czyść poprzednie wiadomości
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(form));
 
-    try {
-        // Dodaj stan ładowania przycisku
-        const submitButton = form.querySelector('button[type="submit"]');
-        submitButton.textContent = 'Ładowanie...';
-        submitButton.disabled = true;
+    try {
+        const res = await fetch('/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
 
-        const res = await fetch('/login', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
-        });
+        const result = await res.json();
 
-        const result = await res.json();
-        
-        // Przywróć przycisk
-        submitButton.textContent = 'Zaloguj';
-        submitButton.disabled = false;
-
-
-        if (res.ok) {
-            // Jeśli logowanie udane, przekierowanie zależne od roli
-            if (result.redirect_url) {
-                window.location.href = result.redirect_url;
-            } else {
-                messageElement.textContent = result.message;
-            }
-        } else {
-            // Błąd logowania
-            messageElement.textContent = result.error || "Wystąpił nieznany błąd logowania. Spróbuj ponownie.";
-            messageElement.style.color = 'var(--danger)';
-        }
-    } catch (err) {
-        // Przywróć przycisk po błędzie sieci
-        const submitButton = form.querySelector('button[type="submit"]');
-        submitButton.textContent = 'Zaloguj';
-        submitButton.disabled = false;
-        
-        messageElement.textContent = `Błąd sieci: ${err.message}. Sprawdź połączenie i spróbuj ponownie.`;
-        messageElement.style.color = 'var(--danger)';
-    }
+        if (res.ok) {
+            // Jeśli logowanie udane, przekierowanie zależne od roli
+            if (result.redirect_url) {
+                window.location.href = result.redirect_url;
+            } else {
+                document.getElementById('message').textContent = result.message;
+            }
+        } else {
+            // Błąd logowania
+            document.getElementById('message').textContent = result.error || "Błąd logowania";
+        }
+    } catch (err) {
+        document.getElementById('message').textContent = `Błąd sieci: ${err.message}`;
+    }
 });
 
 // Przyciski do rejestracji
 document.getElementById('registerTravelerBtn').onclick = () => {
-    // Proszę sprawdzić, czy endpoint 'app_bp.register_traveler_page' jest poprawny w kontekście Twojego frameworka
-    window.location.href = "{{ url_for('app_bp.register_traveler_page') }}";
+    window.location.href = "{{ url_for('app_bp.register_traveler_page') }}";
 };
 document.getElementById('registerEmployeeBtn').onclick = () => {
-    // Proszę sprawdzić, czy endpoint 'app_bp.register_employee_page' jest poprawny w kontekście Twojego frameworka
-    window.location.href = "{{ url_for('app_bp.register_employee_page') }}";
+    window.location.href = "{{ url_for('app_bp.register_employee_page') }}";
 };
 </script>
 {% endblock %}

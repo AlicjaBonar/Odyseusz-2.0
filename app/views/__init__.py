@@ -3,7 +3,7 @@ from .countries import countries_bp
 from .trips import trips_bp
 from .home import home_bp
 from .employees import employees_bp
-from .login import auth_bp
+from .auth import auth_bp
 from .app import app_bp
 from .notifications import notifications_bp
 from .stages import stages_bp
