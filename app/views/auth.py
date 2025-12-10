@@ -46,7 +46,7 @@ def login():
 def login_page():
     return render_template("login.html")
 
-@auth_bp.route("/logout")
+@auth_bp.route("/logout", methods=["GET", "POST"])
 def logout():
-    logout_user()  # Wylogowuje aktualnego użytkownika
-    return redirect(url_for('auth.login'))
+    logout_user()
+    return redirect(url_for('auth.login_page'))

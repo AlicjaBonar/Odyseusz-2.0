@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Zgłoszenia i Raporty{% endblock %}
+
+{% block content %}
+<div class="reports-container">
+    <h1>Zgłoszenia i Raporty</h1>
+
+    <a href="/employee_dashboard" class="back-link">← Wróć do dashboardu</a>
+
+    <hr>
+
+    <div class="filter-box">
+        <form action="{{ url_for('app_bp.reports_page') }}" method="POST">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>Kraj:</label>
+                    <input type="text" name="country" placeholder="np. Polska" value="{{ f_country }}">
+                </div>
+
+                <div class="filter-group">
+                    <label>Data od:</label>
+                    <input type="date" name="date_from" value="{{ f_date_from }}">
+                </div>
+
+                <div class="filter-group">
+                    <label>Data do:</label>
+                    <input type="date" name="date_to" value="{{ f_date_to }}">
+                </div>
+
+                <div class="filter-group">
+                    <label>Status:</label>
+                    <select name="status">
+                        <option value="">-- Wszystkie --</option>
+                        <option value="PLANNED" {% if f_status=='PLANNED' %}selected{% endif %}>Planowana</option>
+                        <option value="IN_PROGRESS" {% if f_status=='IN_PROGRESS' %}selected{% endif %}>W trakcie</option>
+                        <option value="COMPLETED" {% if f_status=='COMPLETED' %}selected{% endif %}>Zakończona</option>
+                        <option value="CANCELLED" {% if f_status=='CANCELLED' %}selected{% endif %}>Anulowana</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-actions">
+                <button type="submit" class="search-btn">🔍 Szukaj</button>
+                <button type="button" class="export-btn" onclick="exportCSV()">📂 Eksportuj do CSV</button>
+            </div>
+        </form>
+    </div>
+
+    {% if trips %}
+    <table class="data-table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Podróżny (PESEL)</th>
+            <th>Kraje (Trasa)</th>
+            <th>Daty (Start - Koniec)</th>
+            <th>Status</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for trip in trips %}
+        <tr>
+            <td>{{ trip.id }}</td>
+            <td>
+                {{ trip.traveler.first_name }} {{ trip.traveler.last_name }} <br>
+                <small>{{ trip.traveler_pesel }}</small>
+            </td>
+            <td>
+                {% set countries = [] %}
+                {% for stage in trip.stages %}
+                {% if stage.location.city.country.name not in countries %}
+                {{ stage.location.city.country.name }}{% if not loop.last %}, {% endif %}
+                {% set _ = countries.append(stage.location.city.country.name) %}
+                {% endif %}
+                {% endfor %}
+            </td>
+            <td>
+                {% if trip.stages %}
+                {{ trip.stages[0].start_date.strftime('%Y-%m-%d') }}
+                do
+                {{ trip.stages[-1].end_date.strftime('%Y-%m-%d') }}
+                {% else %}
+                Brak etapów
+                {% endif %}
+            </td>
+            <td>
+                {% if trip.status.name == 'PLANNED' %}
+                <span class="status-badge planned">Planowana</span>
+                {% elif trip.status.name == 'IN_PROGRESS' %}
+                <span class="status-badge progress">W trakcie</span>
+                {% elif trip.status.name == 'COMPLETED' %}
+                <span class="status-badge completed">Zakończona</span>
+                {% else %}
+                {{ trip.status.name }}
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% elif request.method == 'POST' %}
+    <p class="no-results">Brak wyników dla podanych kryteriów.</p>
+    {% else %}
+    <p class="info-text">Użyj filtrów powyżej, aby znaleźć zgłoszenia.</p>
+    {% endif %}
+</div>
+
+<script>
+    function exportCSV() {
+        alert("Rozpoczęto eksport danych do pliku CSV... (funkcja w przygotowaniu)");
+    }
+</script>
+
+<style>
+    .filter-box {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border: 1px solid #ddd;
+    }
+
+    .filter-row {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .filter-group label {
+        font-size: 0.9em;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .filter-group input, .filter-group select {
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+
+    .search-btn {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .export-btn {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .data-table th, .data-table td {
+        border: 1px solid #ddd;
+        padding: 12px;
+        text-align: left;
+    }
+
+    .data-table th {
+        background-color: #f2f2f2;
+    }
+
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.85em;
+        color: white;
+    }
+
+    .status-badge.planned {
+        background-color: #17a2b8;
+    }
+
+    .status-badge.progress {
+        background-color: #ffc107;
+        color: black;
+    }
+
+    .status-badge.completed {
+        background-color: #28a745;
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-bottom: 10px;
+        text-decoration: none;
+        color: #666;
+    }
+</style>
+{% endblock %}

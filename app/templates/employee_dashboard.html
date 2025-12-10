@@ -1,45 +1,48 @@
 {% extends "base.html" %}
 
-{% block title %}Panel Podróżnego – Odyseusz 2.0{% endblock %}
+{% block title %}Panel Pracownika – Odyseusz 2.0{% endblock %}
 
 {% block content %}
 <div class="dashboard-wrapper">
     <div class="dashboard-card">
 
         <div class="dashboard-header">
-            <div class="user-avatar">🎒</div>
-            <h2>Witaj, {{ traveler.first_name }}!</h2>
-            <p class="subtitle">Panel Podróżnego</p>
-            <span class="badge">Konto Obywatela</span>
+            <div class="user-avatar">👨‍💼</div>
+            <h2>Witaj, {{ employee.first_name }}!</h2>
+            <p class="subtitle">Panel Pracownika Konsulatu</p>
+            {% if employee.consulate %}
+            <span class="badge">{{ employee.consulate.name }}</span>
+            {% endif %}
         </div>
 
         <hr class="divider">
 
         <div class="dashboard-menu">
 
-            <div class="menu-item active-item"
-                 onclick="window.location.href='{{ url_for('notifications.notifications_page') }}'">
-                <span class="menu-icon">🔔</span>
+            <a href="{{ url_for('app_bp.reports_page') }}" class="menu-item active-item">
+                <span class="menu-icon">📊</span>
                 <div class="menu-text">
-                    <strong>Powiadomienia</strong>
-                    <small>Sprawdź alerty bezpieczeństwa</small>
+                    <strong>Zgłoszenia i raporty</strong>
+                    <small>Przeglądaj zgłoszenia, filtruj dane i statystyki</small>
                 </div>
                 <span class="menu-arrow">›</span>
-            </div>
+            </a>
 
-            <div class="menu-item active-item" onclick="window.location.href='/travelers_trips'">
-                <span class="menu-icon">🌍</span>
+            <div class="menu-item inactive-item" onclick="alert('Ta funkcja jest w przygotowaniu.');">
+                <span class="menu-icon">⚙️</span>
                 <div class="menu-text">
-                    <strong>Moje podróże</strong>
-                    <small>Historia i planowane wyjazdy</small>
+                    <strong>Ustawienia konta</strong>
+                    <small>Zmień hasło lub dane kontaktowe</small>
                 </div>
-                <span class="menu-arrow">›</span>
+                <span class="menu-arrow" style="font-size: 0.8em;">🔒</span>
             </div>
 
         </div>
 
         <div class="logout-section">
-            <button class="logout-btn" onclick="window.location.href='/'">Wyloguj się</button>
+            <form action="{{ url_for('auth.logout') }}" method="post">
+                <button type="submit" class="logout-btn">Wyloguj się</button>
+            </form>
         </div>
 
     </div>
@@ -127,6 +130,12 @@
         box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
     }
 
+    .menu-item.inactive-item {
+        opacity: 0.6;
+        background-color: #fafafa;
+        cursor: not-allowed;
+    }
+
     .menu-icon {
         font-size: 24px;
         margin-right: 15px;
@@ -170,7 +179,6 @@
         padding: 10px 20px;
         border-radius: 8px;
         transition: background 0.2s;
-        font-size: 1rem;
     }
 
     .logout-btn:hover {

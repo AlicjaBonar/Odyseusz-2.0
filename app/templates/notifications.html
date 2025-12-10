@@ -5,6 +5,13 @@
     <title>Powiadomienia</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
+        .notifications-container {
+            max-width: 100%;
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+
         .notification-item {
             padding: 15px;
             margin-bottom: 15px;
@@ -53,7 +60,6 @@
             line-height: 1.4;
         }
 
-
         .notification-body-full {
             display: none; /* Ukryte domyślnie */
             margin-top: 10px;
@@ -83,12 +89,12 @@
 
         <hr>
 
-        <div id="notificationsList" class="login-mockup">
+        <div id="notificationsList" class="notifications-container">
             <div style="padding: 20px; color: #666;">Ładowanie powiadomień...</div>
         </div>
 
         <div class="buttons">
-            <button class="neutral-button" onclick="window.location.href='/traveler_dashboard'">
+            <button class="neutral-button" onclick="window.location.href='{{ url_for('notifications.traveler_dashboard', pesel=traveler.pesel) }}'">
                 Wróć do strony głównej
             </button>
         </div>
