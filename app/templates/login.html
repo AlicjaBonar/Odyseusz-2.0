@@ -2,10 +2,92 @@
 
 {% block title %}Logowanie – Odyseusz 2.0{% endblock %}
 
+{% block head %}
+<style>
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+    
+    .auth-card {
+        background: var(--white);
+        padding: 40px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow); 
+        max-width: 450px;
+        margin: 40px auto;
+        text-align: center;
+    }
+
+    .auth-card h2 {
+        color: var(--primary-dark);
+        margin-bottom: 10px;
+        font-size: 1.75rem;
+    }
+
+    .auth-card p {
+        color: var(--text-secondary);
+        margin-bottom: 30px;
+    }
+
+    .auth-card .form-group {
+        margin-bottom: 20px;
+        text-align: left; 
+    }
+
+    .auth-card .btn {
+        width: 100%;
+        justify-content: center;
+        font-size: 1rem;
+        padding: 12px;
+    }
+
+    .separator {
+        margin: 30px 0;
+        border-top: 1px solid var(--gray-200);
+        position: relative;
+    }
+
+    .separator span {
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #fff;
+        padding: 0 10px;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+    }
+
+
+    .registration-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 15px; 
+    }
+
+    .btn-secondary {
+        background: transparent;
+        border: 2px solid var(--gray-200);
+        color: var(--gray-700);
+        box-shadow: none;
+    }
+
+    .btn-secondary:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--gray-50);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="login-container">
-    <h2>Logowanie do systemu Odyseusz</h2>
-    <p>Proszę podać dane dostępowe.</p>
+<div class="auth-card">
+    <h2>Witaj w Odyseuszu</h2>
+    <p>Zaloguj się, aby zarządzać podróżami.</p>
     
     <form id="loginForm" class="login-form">
         <div class="form-group">
@@ -14,15 +96,17 @@
         <div class="form-group">
             <input type="password" name="password" placeholder="Hasło" class="form-control" required>
         </div>
-        <button type="submit" class="btn">Zaloguj</button>
+        <button type="submit" class="btn">Zaloguj się</button>
     </form>
-    <div id="message"></div>
-
-    <hr>
     
-    <div class="btn-group-vertical">
-        <button class="btn btn-secondary" id="registerTravelerBtn">Zarejestruj podróżnego</button>
-        <button class="btn btn-secondary" id="registerEmployeeBtn">Zarejestruj pracownika (admin)</button>
+    <div id="message" style="margin-top: 15px; font-weight: 500; color: var(--danger);"></div>
+
+    <div class="separator">
+        <span>lub</span>
+    </div>
+    
+    <div class="registration-actions">
+        <button class="btn btn-secondary" id="registerTravelerBtn">Zarejestruj</button>
     </div>
 </div>
 {% endblock %}
@@ -30,9 +114,11 @@
 {% block scripts %}
 <script>
 const form = document.getElementById('loginForm');
+const msgDiv = document.getElementById('message');
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    msgDiv.textContent = ""; // Czyść komunikaty
     const data = Object.fromEntries(new FormData(form));
 
     try {
@@ -45,27 +131,25 @@ form.addEventListener('submit', async (e) => {
         const result = await res.json();
 
         if (res.ok) {
-            // Jeśli logowanie udane, przekierowanie zależne od roli
             if (result.redirect_url) {
                 window.location.href = result.redirect_url;
             } else {
-                document.getElementById('message').textContent = result.message;
+                msgDiv.style.color = "var(--accent)";
+                msgDiv.textContent = result.message;
             }
         } else {
-            // Błąd logowania
-            document.getElementById('message').textContent = result.error || "Błąd logowania";
+            msgDiv.style.color = "var(--danger)";
+            msgDiv.textContent = result.error || "Błąd logowania";
         }
     } catch (err) {
-        document.getElementById('message').textContent = `Błąd sieci: ${err.message}`;
+        msgDiv.style.color = "var(--danger)";
+        msgDiv.textContent = `Błąd sieci: ${err.message}`;
     }
 });
 
-// Przyciski do rejestracji
 document.getElementById('registerTravelerBtn').onclick = () => {
     window.location.href = "{{ url_for('app_bp.register_traveler_page') }}";
 };
-document.getElementById('registerEmployeeBtn').onclick = () => {
-    window.location.href = "{{ url_for('app_bp.register_employee_page') }}";
-};
+
 </script>
 {% endblock %}

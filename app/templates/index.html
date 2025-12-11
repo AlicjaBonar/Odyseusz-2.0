@@ -2,11 +2,107 @@
 
 {% block title %}System Odyseusz - Logowanie{% endblock %}
 
+{% block head %}
+<style>
+    /* --- STYLE PODSTAWOWE MODALA --- */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(3px);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+    .modal-overlay.active { display: flex; }
+
+    /* --- STYLE TWOJEGO MOCKA WĘZŁA KRAJOWEGO (Wewnątrz modala) --- */
+    .wezel-mock-container {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: white;
+        padding: 40px;
+        width: 100%;
+        max-width: 450px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        text-align: center;
+        border-radius: 4px;
+        position: relative;
+    }
+    
+    .wezel-header-logo { font-size: 3rem; margin-bottom: 10px; }
+    .wezel-title { font-size: 1.2rem; color: #333; margin-bottom: 30px; font-weight: bold; }
+    
+    /* Przyciski w stylu węzła */
+    .mock-btn {
+        display: block;
+        width: 100%;
+        padding: 1rem; 
+        margin-bottom: 0.75rem; 
+        background: var(--white); 
+        border: 1px solid var(--gray-300); 
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600; 
+        transition: var(--transition); 
+        text-align: left;
+        position: relative;
+        border-radius: var(--radius); 
+        font-family: inherit; 
+    }
+
+    .wezel-note {
+        font-size: 0.8rem;
+        color: #666;
+        margin-top: 20px;
+        border-top: 1px solid #eee;
+        padding-top: 10px;
+    }
+    .arrow { float: right; }
+
+    /* Zamknięcie modala */
+    .close-modal {
+        position: absolute;
+        top: 10px; right: 15px;
+        font-size: 24px; color: #aaa;
+        cursor: pointer;
+    }
+    .close-modal:hover { color: #000; }
+
+
+    /* --- PEŁNOEKRANOWY EKRAN MOBYWATEL (SCREENSHOT) --- */
+    .mobywatel-fullscreen {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: #fff;
+        z-index: 2000; /* Nad modalem */
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    .mobywatel-fullscreen.active { display: flex; }
+
+    .qr-screen-img {
+        max-width: 100%;
+        max-height: 80vh;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    
+    .processing-info {
+        margin-top: 20px;
+        font-size: 1.2rem;
+        color: #333;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="login-mockup">
     <h2>Zaloguj się do systemu</h2>
     
-    <div class="login-option">
+    <div class="login-option" id="mobywatelBtn">
         <span class="login-option-icon">🔒</span>
         <div class="login-option-text">
             <strong>Profil zaufany</strong>
@@ -25,7 +121,7 @@
         <span class="login-option-arrow">></span>
     </div>
 
-    <div class="login-option">
+    <div class="login-option inactive" onclick="alert('Ta funkcja jest w przygotowaniu.');">
         <span class="login-option-icon">🏛️</span>
         <div class="login-option-text">
             <strong>Bankowość elektroniczna</strong>
@@ -33,8 +129,8 @@
         </div>
         <span class="login-option-arrow">></span>
     </div>
-
-    <div class="login-option">
+    
+    <div class="login-option inactive" onclick="alert('Ta funkcja jest w przygotowaniu.');">
         <span class="login-option-icon">🌐</span> 
         <div class="login-option-text">
             <strong>E-dowód</strong>
@@ -43,22 +139,88 @@
         <span class="login-option-arrow">></span>
     </div>
 </div>
+
+<div id="wezelModal" class="modal-overlay">
+    <div class="wezel-mock-container">
+        <span class="close-modal" id="closeWezel">&times;</span>
+        
+        <div class="wezel-title">Węzeł Krajowy / Login.gov.pl</div>
+        <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">Symulacja potwierdzenia tożsamości</p>
+
+        <button class="mock-btn btn-existing" onclick="startFlow('existing')">
+            👤 Zaloguj jako: Jan Kowalski
+            <div style="font-size: 0.75em; font-weight: normal;">Użytkownik już posiada konto w Odyseuszu.</div>
+            <span class="arrow">→</span>
+        </button>
+
+        <button class="mock-btn btn-new" onclick="startFlow('new')">
+            🆕 Zaloguj jako: Anna Nowak
+            <div style="font-size: 0.75em; font-weight: normal;">Pierwsze logowanie (wymaga uzupełnienia danych).</div>
+            <span class="arrow">→</span>
+        </button>
+
+        <div class="wezel-note">
+            To jest ekran symulacyjny (Mock) środowiska testowego.
+        </div>
+    </div>
+</div>
+
+<div id="mobywatelScreen" class="mobywatel-fullscreen">
+    <img src="{{ url_for('static', filename='img/mobywatel_qr.png') }}" alt="mObywatel App" class="qr-screen-img">
+    <div class="processing-info">Przetwarzanie danych tożsamości...</div>
+</div>
+
+<form id="finalAuthForm" action="{{ url_for('auth.mobywatel_callback') }}" method="POST" style="display: none;">
+    <input type="hidden" name="scenario" id="scenarioInput">
+</form>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // FAKTYCZNE PRZEKIEROWANIE DLA LOGOWANIA W MOCKUPIE
+
+    // Elementy DOM
+    const openWezelBtn = document.getElementById('mobywatelBtn');
+    const wezelModal = document.getElementById('wezelModal');
+    const closeWezel = document.getElementById('closeWezel');
+    
+    const mobywatelScreen = document.getElementById('mobywatelScreen');
+    const finalAuthForm = document.getElementById('finalAuthForm');
+    const scenarioInput = document.getElementById('scenarioInput');
+
+    // 1. Otwieranie Modala z Węzłem
+    openWezelBtn.onclick = () => {
+        wezelModal.classList.add('active');
+    };
+
+    // Zamykanie Modala
+    closeWezel.onclick = () => {
+        wezelModal.classList.remove('active');
+    };
+
+    // 2. Logika przejścia (Flow)
+    window.startFlow = (scenario) => {
+        // Krok A: Zamknij modal wyboru
+        wezelModal.classList.remove('active');
+
+        // Krok B: Pokaż pełnoekranowy screenshot
+        mobywatelScreen.classList.add('active');
+
+        // Krok C: Ustaw wybrany scenariusz w ukrytym formularzu
+        scenarioInput.value = scenario;
+
+        // Krok D: Czekaj 5 sekund i wyślij formularz
+        setTimeout(() => {
+            finalAuthForm.submit();
+        }, 5000); // 5000 ms = 5 sekund
+    };
+
+    // PRZEKIEROWANIE DLA LOGOWANIA
     document.getElementById('actualLoginBtn').onclick = () => {
         location.href = "{{ url_for('auth.login_page') }}";
     };
 
-    // Logika dla nieaktywnych opcji
-    document.querySelectorAll('.login-mockup .login-option').forEach(option => {
-        if (option.id !== 'actualLoginBtn') {
-            option.onclick = () => {
-                alert("Ta opcja jest obecnie nieaktywna (mockup).");
-            };
-        }
-    });
+
+
 </script>
 {% endblock %}

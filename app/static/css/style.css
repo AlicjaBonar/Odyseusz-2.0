@@ -301,6 +301,31 @@ body {
     color: var(--primary);
 }
 
+/* --- STATUS NIEDOSTĘPNY DLA LOGIN-OPTION --- */
+.login-option.inactive {
+    opacity: 0.5;                
+    cursor: not-allowed;       
+    background: var(--gray-50); 
+    filter: grayscale(100%);    
+}
+
+.login-option.inactive:hover {
+    transform: none;             
+    box-shadow: var(--shadow-sm);
+    border-color: rgba(0, 0, 0, 0.08); 
+    background: var(--gray-50);
+}
+
+.login-option.inactive:hover .login-option-icon {
+    transform: none;            
+    background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-50) 100%);
+}
+
+.login-option.inactive:hover .login-option-arrow {
+    transform: none;             
+    color: var(--gray-300);
+}
+
 /* ============================================== */
 /* FORMS & BUTTONS                                */
 /* ============================================== */
@@ -352,6 +377,154 @@ body {
     transform: translateY(0);
 }
 
+
+/* ============================================== */
+/* MENU                                           */
+/* ============================================== */
+.menu-item.active-item:hover {
+    border-color: #007bff;
+    background-color: #f8faff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+}
+
+.menu-item.inactive-item {
+    opacity: 0.6;
+    background-color: #fafafa;
+    cursor: not-allowed;
+}
+
+    .dashboard-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 60vh;
+        padding: 20px;
+    }
+
+    .dashboard-card {
+        background-color: white;
+        width: 100%;
+        max-width: 500px;
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        border: 1px solid #f0f0f0;
+    }
+
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    .user-avatar {
+        font-size: 48px;
+        margin-bottom: 10px;
+    }
+
+    .dashboard-header h2 {
+        margin: 0;
+        color: #333;
+        font-size: 1.8rem;
+    }
+
+    .subtitle {
+        color: #666;
+        margin: 5px 0 10px 0;
+    }
+
+    .badge {
+        background-color: #e3f2fd;
+        color: #0d47a1;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .divider {
+        border: 0;
+        height: 1px;
+        background: #eee;
+        margin: 20px 0;
+    }
+
+    .dashboard-menu {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .menu-item {
+        display: flex;
+        align-items: center;
+        padding: 15px 20px;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.2s ease;
+        background-color: #fff;
+        cursor: pointer;
+    }
+
+    .menu-item.active-item:hover {
+        border-color: #007bff;
+        background-color: #f8faff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+    }
+
+    .menu-icon {
+        font-size: 24px;
+        margin-right: 15px;
+        width: 30px;
+        text-align: center;
+    }
+
+    .menu-text {
+        flex: 1;
+    }
+
+    .menu-text strong {
+        display: block;
+        font-size: 1rem;
+        color: #333;
+        margin-bottom: 2px;
+    }
+
+    .menu-text small {
+        color: #888;
+        font-size: 0.85rem;
+    }
+
+    .menu-arrow {
+        color: #ccc;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+
+    .logout-section {
+        margin-top: 30px;
+        text-align: center;
+    }
+
+    .logout-btn {
+        background: none;
+        border: none;
+        color: #dc3545;
+        font-weight: 500;
+        cursor: pointer;
+        padding: 10px 20px;
+        border-radius: 8px;
+        transition: background 0.2s;
+        font-size: 1rem;
+    }
+
+    .logout-btn:hover {
+        background-color: #fff5f5;
+        text-decoration: underline;
+    }
 /* ============================================== */
 /* FOOTER - COMPACT                               */
 /* ============================================== */

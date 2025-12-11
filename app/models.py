@@ -5,6 +5,7 @@ from sqlalchemy import Boolean, Table
 from datetime import datetime
 from enum import Enum as PyEnum
 from flask_login import UserMixin
+import random
 
 class TripStatus(PyEnum):
     PLANNED = "planned"

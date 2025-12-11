@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Panel Pracownika – Lista Ostrzeżeń Konsularnych{% endblock %}
+
+{% block head %}
+<style>
+    /* Stylowanie tabeli (Mock) */
+    .alerts-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-top: 20px;
+    }
+    .alerts-table th, .alerts-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    .alerts-table th {
+        background-color: var(--gray-50);
+        color: var(--gray-700);
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
+    .alerts-table tr:hover {
+        background-color: var(--gray-100);
+    }
+    .alerts-table td:last-child {
+        text-align: right;
+    }
+    .alerts-table a {
+        text-decoration: none;
+    }
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .status-active { background-color: #d1fae5; color: #065f46; } /* Zielony */
+    .status-expired { background-color: #fee2e2; color: #991b1b; } /* Czerwony */
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-card" style="max-width: 900px; margin: 40px auto; padding: 30px;">
+    <h2>Zarządzanie Ostrzeżeniami Konsularnymi</h2>
+    <p class="subtitle" style="margin-bottom: 20px;">Przegląd aktywnych i historycznych ostrzeżeń.</p>
+
+    <table class="alerts-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Treść (fragment)</th>
+                <th>Ważność</th>
+                <th>Status</th>
+                <th>Akcje</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for alert in [
+                {'id': 101, 'content': 'Zakaz wjazdu...', 'validity': '2026-05-10', 'status': 'active'},
+                {'id': 102, 'content': 'Wymagane dodatkowe dokumenty...', 'validity': '2024-11-20', 'status': 'expired'},
+                {'id': 103, 'content': 'Wstrzymana wiza...', 'validity': '2027-01-01', 'status': 'active'}
+            ] %}
+            <tr>
+                <td>{{ alert.id }}</td>
+                <td>{{ alert.content|truncate(20) }}</td>
+                <td>{{ alert.validity }}</td>
+                <td>
+                    {% if alert.status == 'active' %}
+                        <span class="status-badge status-active">Aktywne</span>
+                    {% else %}
+                        <span class="status-badge status-expired">Wygasłe</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ url_for('app_bp.warning_edit_page') }}" class="btn" style="padding: 6px 10px; font-size: 0.8rem;">
+                        Edytuj
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
