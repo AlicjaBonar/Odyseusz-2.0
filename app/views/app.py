@@ -19,12 +19,12 @@ def register_traveler_page():
 def register_employee_page():
     return render_template("register_employee.html")
 
-@app_bp.route("/warning_list")
-def waring_list_page():
-    return render_template("warnings_list.html")
+@app_bp.route("/warning_list_page")
+def warning_list_page():
+    return render_template("warning_list.html")
 
-@app_bp.route("/warning_edit")
-def waring_edit_page():
+@app_bp.route("/warning_edit_page")
+def warning_edit_page():
     return render_template("edit_warning.html")
 
 @login_required

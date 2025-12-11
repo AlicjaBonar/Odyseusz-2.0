@@ -9,12 +9,6 @@
     <p class="subtitle" style="margin-bottom: 30px;">Modyfikuj dane lub utwórz nowe ostrzeżenie.</p>
 
     <form method="POST"> 
-        
-        <div class="form-group">
-            <label for="pesel">PESEL Obywatela (Cel)</label>
-            <input type="text" id="pesel" name="pesel" class="form-control" 
-                   value="{{ alert.pesel | default('') }}" placeholder="Wprowadź PESEL" required>
-        </div>
 
         <div class="form-group">
             <label for="data_waznosci">Data Ważności (Wygasa)</label>
@@ -39,7 +33,7 @@
         <hr class="divider" style="margin: 30px 0;">
 
         <div style="display: flex; justify-content: space-between; gap: 10px;">
-            <a href="{{ url_for('app_bp.lista_ostrzezen') }}" class="btn" style="background: var(--gray-600); color: white; width: 100%;">
+            <a href="{{ url_for('app_bp.warning_list_page') }}" class="btn" style="background: var(--gray-600); color: white; width: 100%; text-decoration: none;">
                 Anuluj i wróć
             </a>
             <button type="submit" class="btn" style="width: 100%;">
