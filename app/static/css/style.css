@@ -301,6 +301,31 @@ body {
     color: var(--primary);
 }
 
+/* --- STATUS NIEDOSTĘPNY DLA LOGIN-OPTION --- */
+.login-option.inactive {
+    opacity: 0.5;                
+    cursor: not-allowed;       
+    background: var(--gray-50); 
+    filter: grayscale(100%);    
+}
+
+.login-option.inactive:hover {
+    transform: none;             
+    box-shadow: var(--shadow-sm);
+    border-color: rgba(0, 0, 0, 0.08); 
+    background: var(--gray-50);
+}
+
+.login-option.inactive:hover .login-option-icon {
+    transform: none;            
+    background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-50) 100%);
+}
+
+.login-option.inactive:hover .login-option-arrow {
+    transform: none;             
+    color: var(--gray-300);
+}
+
 /* ============================================== */
 /* FORMS & BUTTONS                                */
 /* ============================================== */
@@ -350,6 +375,19 @@ body {
 
 .btn:active {
     transform: translateY(0);
+}
+
+.menu-item.active-item:hover {
+    border-color: #007bff;
+    background-color: #f8faff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+}
+
+.menu-item.inactive-item {
+    opacity: 0.6;
+    background-color: #fafafa;
+    cursor: not-allowed;
 }
 
 /* ============================================== */
