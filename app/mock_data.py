@@ -21,10 +21,13 @@ MOCK_EXISTING_CITIZEN = {
     "pesel": "11111111111",
     "first_name": "Jan",
     "last_name": "Kowalski",
+    "email": "jan@example.com",
     "login": "jan.kowalski", 
     "password": "mock",
-    "email": "jan@example.com",
-    "phone": "123456789"
+    "phone_number": "123456789",
+    "age": "40"
+
+
 }
 
 # --- 3. GENERATOR NOWEGO OBYWATELA (Losowa Anna Nowak) ---
