@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Panel Pracownika – Edycja Ostrzeżenia Konsularnego{% endblock %}
+
+{% block content %}
+<div class="dashboard-card" style="max-width: 650px; margin: 40px auto; padding: 30px;">
+    
+    <h2>Edycja Ostrzeżenia: #{{ alert.id | default('NOWE') }}</h2>
+    <p class="subtitle" style="margin-bottom: 30px;">Modyfikuj dane lub utwórz nowe ostrzeżenie.</p>
+
+    <form method="POST"> 
+        
+        <div class="form-group">
+            <label for="pesel">PESEL Obywatela (Cel)</label>
+            <input type="text" id="pesel" name="pesel" class="form-control" 
+                   value="{{ alert.pesel | default('') }}" placeholder="Wprowadź PESEL" required>
+        </div>
+
+        <div class="form-group">
+            <label for="data_waznosci">Data Ważności (Wygasa)</label>
+            <input type="date" id="data_waznosci" name="data_waznosci" class="form-control" 
+                   value="{{ alert.validity | default('') }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="status">Status Ostrzeżenia</label>
+            <select id="status" name="status" class="form-control" required>
+                <option value="active" {% if alert.status == 'active' %}selected{% endif %}>Aktywne</option>
+                <option value="inactive" {% if alert.status == 'inactive' %}selected{% endif %}>Wycofane/Nieaktywne</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="tresc">Treść Ostrzeżenia</label>
+            <textarea id="tresc" name="tresc" class="form-control" rows="5" 
+                      placeholder="Opisz dokładnie powód ostrzeżenia..." required>{{ alert.content | default('') }}</textarea>
+        </div>
+        
+        <hr class="divider" style="margin: 30px 0;">
+
+        <div style="display: flex; justify-content: space-between; gap: 10px;">
+            <a href="{{ url_for('app_bp.lista_ostrzezen') }}" class="btn" style="background: var(--gray-600); color: white; width: 100%;">
+                Anuluj i wróć
+            </a>
+            <button type="submit" class="btn" style="width: 100%;">
+                Zapisz zmiany
+            </button>
+        </div>
+    </form>
+    
+</div>
+{% endblock %}
+
+{% set alert = {'id': 101, 'pesel': '11111111111', 'content': 'Przykładowa treść ostrzeżenia. Zakaz wjazdu ze względu na...', 'validity': '2026-05-10', 'status': 'active'} %}

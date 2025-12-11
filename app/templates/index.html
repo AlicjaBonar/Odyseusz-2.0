@@ -25,7 +25,6 @@
         width: 100%;
         max-width: 450px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        border-top: 5px solid #dc3545; /* Polski czerwony */
         text-align: center;
         border-radius: 4px;
         position: relative;
@@ -38,23 +37,19 @@
     .mock-btn {
         display: block;
         width: 100%;
-        padding: 15px;
-        margin-bottom: 15px;
-        border: none;
+        padding: 1rem; 
+        margin-bottom: 0.75rem; 
+        background: var(--white); 
+        border: 1px solid var(--gray-300); 
         cursor: pointer;
         font-size: 1rem;
-        font-weight: bold;
-        transition: 0.2s;
+        font-weight: 600; 
+        transition: var(--transition); 
         text-align: left;
         position: relative;
-        border-radius: 4px;
+        border-radius: var(--radius); 
+        font-family: inherit; 
     }
-
-    .btn-existing { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
-    .btn-existing:hover { background-color: #c8e6c9; }
-
-    .btn-new { background-color: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
-    .btn-new:hover { background-color: #bbdefb; }
 
     .wezel-note {
         font-size: 0.8rem;
@@ -149,7 +144,6 @@
     <div class="wezel-mock-container">
         <span class="close-modal" id="closeWezel">&times;</span>
         
-        <div class="wezel-header-logo">🦅</div>
         <div class="wezel-title">Węzeł Krajowy / Login.gov.pl</div>
         <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">Symulacja potwierdzenia tożsamości</p>
 
