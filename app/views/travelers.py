@@ -39,7 +39,7 @@ def create_traveler():
         }), 201
     except IntegrityError:
         g.db.rollback()
-        return jsonify({"error": "Traveler with this pesel or login already exists"}), 409
+        return jsonify({"error": "Podróny z tym numerem PESEL lub loginem już istnieje"}), 409
     except Exception as e:
         g.db.rollback()
         return jsonify({"error": str(e)}), 500
