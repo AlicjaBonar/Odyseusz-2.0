@@ -94,36 +94,31 @@ def travelers_trips_page():
 def reports_page():
     db = SessionLocal()
     trips = []
-    show_modal = False  # Domyślnie okno zamknięte
+    show_modal = False
 
     filter_country = ""
     filter_date_from = ""
     filter_date_to = ""
     filter_status = ""
 
-    # Zapytanie podstawowe z eager loading (żeby uniknąć błędów w HTML)
     query = db.query(Trip).options(
         joinedload(Trip.traveler),
         joinedload(Trip.stages).joinedload(Stage.location).joinedload(Location.city).joinedload(City.country)
     )
 
-    # Dołączamy tabele do filtrowania
     query = query.join(Trip.stages).join(Stage.location).join(Location.city).join(City.country)
 
     if request.method == "POST":
-        # Pobieramy parametry filtra
         filter_country = request.form.get("country")
         filter_date_from = request.form.get("date_from")
         filter_date_to = request.form.get("date_to")
         filter_status = request.form.get("status")
 
-        # SPRAWDZAMY, KTÓRY GUZIK KLIKNIĘTO
         action = request.form.get("action")
 
         if action == "report":
-            show_modal = True  # Jeśli kliknięto "Generuj raport", otwórz okno
+            show_modal = True
 
-        # --- Logika filtrowania (taka sama dla szukania i raportu) ---
         if filter_country:
             query = query.filter(Country.name.ilike(f"%{filter_country}%"))
 
@@ -138,7 +133,6 @@ def reports_page():
                 )
             )
 
-        # Pobieramy wyniki
         trips = query.distinct().order_by(Trip.id.desc()).all()
 
     db.close()
