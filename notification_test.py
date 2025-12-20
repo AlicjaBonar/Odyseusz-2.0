@@ -64,7 +64,7 @@ def setup_real_data():
         end_date = now + timedelta(days=5)  # Wyjeżdża za 5 dni
 
         # Sprawdzamy czy ta wycieczka już jest, żeby nie dublować
-        existing_trip = session.query(Trip).filter_by(traveler_pesel=pesel, status="IN_PTOGRESS").first()
+        existing_trip = session.query(Trip).filter_by(traveler_pesel=pesel, status="IN_PROGRESS").first()
 
         if not existing_trip:
             trip = Trip(status="IN_PROGRESS", traveler_pesel=pesel)

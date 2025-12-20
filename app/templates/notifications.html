@@ -12,6 +12,32 @@
             padding-top: 20px;
         }
 
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .settings-btn {
+            background: none;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: 0.2s;
+        }
+
+        .settings-btn:hover {
+            background-color: #eee;
+            color: #000;
+        }
+
         .notification-item {
             padding: 15px;
             margin-bottom: 15px;
@@ -19,7 +45,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         }
 
         .notification-unread {
@@ -61,7 +87,7 @@
         }
 
         .notification-body-full {
-            display: none; /* Ukryte domyślnie */
+            display: none;
             margin-top: 10px;
             padding-top: 10px;
             border-top: 1px solid #ddd;
@@ -70,118 +96,323 @@
         }
 
         .expanded .notification-body-full {
-            display: block; /* Pokaż po kliknięciu */
+            display: block;
             animation: fadeIn 0.5s;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
         }
+
+        /* --- MODAL (POPUP USTAWIEŃ) --- */
+        .modal-overlay {
+            display: none; /* Ukryty domyślnie */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            text-align: left;
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+            font-size: 1.2rem;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* Checkbox Row styling */
+        .pref-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        /* Custom Checkbox (Switch look) */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 20px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #be0404;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .modal-buttons {
+            margin-top: 25px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .save-btn {
+            flex: 1;
+            background-color: #be0404;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .save-btn:hover {
+            background-color: #a00000;
+        }
+
+        .cancel-btn {
+            flex: 1;
+            background-color: #eee;
+            color: #333;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .cancel-btn:hover {
+            background-color: #ddd;
+        }
+
     </style>
 </head>
 <body>
-    <div class="container">
+<div class="container">
+
+    <div class="header-row">
         <h1>Centrum Powiadomień</h1>
-
-        <p>Zalogowany jako: <strong>{{ traveler.login }}</strong></p>
-        <input type="hidden" id="peselInput" value="{{ traveler.pesel }}">
-
-        <hr>
-
-        <div id="notificationsList" class="notifications-container">
-            <div style="padding: 20px; color: #666;">Ładowanie powiadomień...</div>
-        </div>
-
-        <div class="buttons">
-            <button class="neutral-button" onclick="window.location.href='{{ url_for('notifications.traveler_dashboard', pesel=traveler.pesel) }}'">
-                Wróć do strony głównej
-            </button>
-        </div>
+        <button class="settings-btn" onclick="openSettings()">
+            ⚙️ Ustawienia
+        </button>
     </div>
 
-    <script>
-        async function loadNotifications() {
-            const pesel = document.getElementById('peselInput').value;
-            const listContainer = document.getElementById('notificationsList');
+    <p>Zalogowany jako: <strong>{{ traveler.login }}</strong></p>
+    <input type="hidden" id="peselInput" value="{{ traveler.pesel }}">
 
-            try {
-                const res = await fetch(`/travelers/${pesel}/notifications`);
-                if (!res.ok) {
-                    listContainer.innerHTML = '<p>Błąd pobierania danych.</p>';
-                    return;
-                }
-                const data = await res.json();
+    <hr>
 
-                listContainer.innerHTML = '';
+    <div id="notificationsList" class="notifications-container">
+        <div style="padding: 20px; color: #666;">Ładowanie powiadomień...</div>
+    </div>
 
-                if(data.length === 0) {
-                    listContainer.innerHTML = '<p>Brak powiadomień. Jesteś bezpieczny.</p>';
-                    return;
-                }
+    <div class="buttons">
+        <button class="neutral-button"
+                onclick="window.location.href='{{ url_for('notifications.traveler_dashboard', pesel=traveler.pesel) }}'">
+            Wróć do strony głównej
+        </button>
+    </div>
+</div>
 
-                data.forEach(note => {
-                    const div = document.createElement('div');
+<div id="settingsModal" class="modal-overlay">
+    <div class="modal-content">
+        <h2>Preferencje powiadomień</h2>
+        <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">Wybierz, jakimi kanałami chcesz otrzymywać
+            alerty bezpieczeństwa:</p>
 
-                    const statusClass = note.is_read ? 'notification-read' : 'notification-unread';
-                    const badgeHtml = note.is_read ? '' : '<span class="status-badge">Nowe ●</span>';
-                    const previewText = note.is_read ? 'Kliknij, aby zobaczyć szczegóły.' : '⚠️ Kliknij, aby odczytać wiadomość!';
+        <div class="pref-row">
+            <span>Powiadomienia SMS</span>
+            <label class="switch">
+                <input type="checkbox" id="prefSms">
+                <span class="slider"></span>
+            </label>
+        </div>
 
-                    div.className = `notification-item ${statusClass}`;
+        <div class="pref-row">
+            <span>Powiadomienia E-mail</span>
+            <label class="switch">
+                <input type="checkbox" id="prefEmail">
+                <span class="slider"></span>
+            </label>
+        </div>
 
-                    div.onclick = function() { toggleNotification(note.id, this, note.is_read); };
+        <div class="pref-row">
+            <span>Powiadomienia PUSH (Aplikacja)</span>
+            <label class="switch">
+                <input type="checkbox" id="prefPush">
+                <span class="slider"></span>
+            </label>
+        </div>
 
-                    div.innerHTML = `
+        <div class="modal-buttons">
+            <button class="cancel-btn" onclick="closeSettings()">Anuluj</button>
+            <button class="save-btn" onclick="saveSettings()">Zapisz preferencje</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const pesel = document.getElementById('peselInput').value;
+
+    async function loadNotifications() {
+        const listContainer = document.getElementById('notificationsList');
+        try {
+            const res = await fetch(`/travelers/${pesel}/notifications`);
+            if (!res.ok) {
+                listContainer.innerHTML = '<p>Błąd pobierania danych.</p>';
+                return;
+            }
+            const data = await res.json();
+            listContainer.innerHTML = '';
+
+            if (data.length === 0) {
+                listContainer.innerHTML = '<p>Brak powiadomień. Jesteś bezpieczny.</p>';
+                return;
+            }
+            data.forEach(note => {
+                const div = document.createElement('div');
+                const statusClass = note.is_read ? 'notification-read' : 'notification-unread';
+                const badgeHtml = note.is_read ? '' : '<span class="status-badge">Nowe ●</span>';
+                const previewText = note.is_read ? 'Kliknij, aby zobaczyć szczegóły.' : '⚠️ Kliknij, aby odczytać wiadomość!';
+                div.className = `notification-item ${statusClass}`;
+                div.onclick = function () {
+                    toggleNotification(note.id, this, note.is_read);
+                };
+                div.innerHTML = `
                         <span class="notification-date">${note.created_at}</span>
                         ${badgeHtml}
                         <strong>Komunikat systemu Odyseusz</strong>
-
-                        <div class="notification-content">
-                            ${previewText}
-                        </div>
-
-                        <div class="notification-body-full">
-                            ${note.message}
-                        </div>
+                        <div class="notification-content">${previewText}</div>
+                        <div class="notification-body-full">${note.message}</div>
                     `;
-                    listContainer.appendChild(div);
-                });
-            } catch(e) {
-                console.error(e);
-                listContainer.innerHTML = '<p>Błąd połączenia z serwerem.</p>';
+                listContainer.appendChild(div);
+            });
+        } catch (e) {
+            console.error(e);
+            listContainer.innerHTML = '<p>Błąd połączenia z serwerem.</p>';
+        }
+    }
+
+    async function toggleNotification(id, element, wasRead) {
+        const isExpanded = element.classList.contains('expanded');
+        if (isExpanded) {
+            element.classList.remove('expanded');
+            return;
+        }
+        element.classList.add('expanded');
+        if (!wasRead && element.classList.contains('notification-unread')) {
+            try {
+                element.classList.remove('notification-unread');
+                element.classList.add('notification-read');
+                const badge = element.querySelector('.status-badge');
+                if (badge) badge.style.display = 'none';
+                const preview = element.querySelector('.notification-content');
+                if (preview) preview.innerText = "Szczegóły:";
+                await fetch(`/notifications/${id}/mark_read`, {method: 'POST'});
+            } catch (err) {
+                console.error("Błąd oznaczania", err);
             }
         }
+    }
 
-        async function toggleNotification(id, element, wasRead) {
-            const isExpanded = element.classList.contains('expanded');
 
-            if (isExpanded) {
-                element.classList.remove('expanded');
-                return;
+    async function openSettings() {
+        const modal = document.getElementById('settingsModal');
+
+        try {
+            const res = await fetch(`/travelers/${pesel}/preferences`);
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('prefSms').checked = data.sms;
+                document.getElementById('prefEmail').checked = data.email;
+                document.getElementById('prefPush').checked = data.push;
             }
-
-            element.classList.add('expanded');
-
-            if (!wasRead && element.classList.contains('notification-unread')) {
-                try {
-                    element.classList.remove('notification-unread');
-                    element.classList.add('notification-read');
-
-                    const badge = element.querySelector('.status-badge');
-                    if(badge) badge.style.display = 'none';
-
-                    const preview = element.querySelector('.notification-content');
-                    if(preview) preview.innerText = "Szczegóły:";
-
-                    await fetch(`/notifications/${id}/mark_read`, { method: 'POST' });
-
-                } catch (err) {
-                    console.error("Nie udało się oznaczyć jako przeczytane", err);
-                }
-            }
+        } catch (e) {
+            console.error("Błąd pobierania preferencji", e);
         }
 
-        loadNotifications();
-    </script>
+        modal.style.display = 'flex';
+    }
+
+    function closeSettings() {
+        document.getElementById('settingsModal').style.display = 'none';
+    }
+
+    async function saveSettings() {
+        const data = {
+            sms: document.getElementById('prefSms').checked,
+            email: document.getElementById('prefEmail').checked,
+            push: document.getElementById('prefPush').checked
+        };
+
+        try {
+            const res = await fetch(`/travelers/${pesel}/preferences`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+                alert("Preferencje zostały zapisane!");
+                closeSettings();
+            } else {
+                alert("Błąd zapisu.");
+            }
+        } catch (e) {
+            console.error("Błąd zapisu", e);
+            alert("Błąd połączenia z serwerem.");
+        }
+    }
+
+    loadNotifications();
+</script>
 </body>
 </html>

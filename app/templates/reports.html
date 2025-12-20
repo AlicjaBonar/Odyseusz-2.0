@@ -7,7 +7,6 @@
     <h1>Zgłoszenia i Raporty</h1>
 
     <a href="/employee_dashboard" class="back-link">← Wróć do dashboardu</a>
-
     <hr>
 
     <div class="filter-box">
@@ -15,7 +14,7 @@
             <div class="filter-row">
                 <div class="filter-group">
                     <label>Kraj:</label>
-                    <input type="text" name="country" placeholder="np. Polska" value="{{ f_country }}">
+                    <input type="text" name="country" placeholder="np. Francja" value="{{ f_country }}">
                 </div>
 
                 <div class="filter-group">
@@ -33,7 +32,8 @@
                     <select name="status">
                         <option value="">-- Wszystkie --</option>
                         <option value="PLANNED" {% if f_status=='PLANNED' %}selected{% endif %}>Planowana</option>
-                        <option value="IN_PROGRESS" {% if f_status=='IN_PROGRESS' %}selected{% endif %}>W trakcie</option>
+                        <option value="IN_PROGRESS" {% if f_status=='IN_PROGRESS' %}selected{% endif %}>W trakcie
+                        </option>
                         <option value="COMPLETED" {% if f_status=='COMPLETED' %}selected{% endif %}>Zakończona</option>
                         <option value="CANCELLED" {% if f_status=='CANCELLED' %}selected{% endif %}>Anulowana</option>
                     </select>
@@ -41,27 +41,31 @@
             </div>
 
             <div class="filter-actions">
-                <button type="submit" class="search-btn">🔍 Szukaj</button>
-                <button type="button" class="export-btn" onclick="exportCSV()">📂 Eksportuj do CSV</button>
+                <button type="submit" name="action" value="search" class="search-btn">🔍 Szukaj</button>
+                <button type="submit" name="action" value="report" class="generate-btn">📄 Generuj raport</button>
             </div>
         </form>
     </div>
 
-    {% if trips %}
+    {% if trips and not show_modal %}
     <table class="data-table">
         <thead>
         <tr>
-            <th>ID</th>
+            <th style="width: 50px;">ID</th>
             <th>Podróżny (PESEL)</th>
             <th>Kraje (Trasa)</th>
-            <th>Daty (Start - Koniec)</th>
+            <th>Termin</th>
             <th>Status</th>
+            <th style="width: 30px;"></th>
         </tr>
         </thead>
         <tbody>
         {% for trip in trips %}
-        <tr>
-            <td>{{ trip.id }}</td>
+
+        {% set status_str = trip.status.name if trip.status.name is defined else trip.status|string %}
+
+        <tr id="summary-{{ trip.id }}" class="summary-row" onclick="toggleTripDetails('{{ trip.id }}')">
+            <td><strong>#{{ trip.id }}</strong></td>
             <td>
                 {{ trip.traveler.first_name }} {{ trip.traveler.last_name }} <br>
                 <small>{{ trip.traveler_pesel }}</small>
@@ -77,42 +81,153 @@
             </td>
             <td>
                 {% if trip.stages %}
-                {{ trip.stages[0].start_date.strftime('%Y-%m-%d') }}
-                do
-                {{ trip.stages[-1].end_date.strftime('%Y-%m-%d') }}
+                {{ trip.stages[0].start_date.strftime('%Y-%m-%d') }} <br> do {{
+                trip.stages[-1].end_date.strftime('%Y-%m-%d') }}
                 {% else %}
                 Brak etapów
                 {% endif %}
             </td>
             <td>
-                {% if trip.status.name == 'PLANNED' %}
+                {% if status_str == 'PLANNED' %}
                 <span class="status-badge planned">Planowana</span>
-                {% elif trip.status.name == 'IN_PROGRESS' %}
+                {% elif status_str == 'IN_PROGRESS' %}
                 <span class="status-badge progress">W trakcie</span>
-                {% elif trip.status.name == 'COMPLETED' %}
+                {% elif status_str == 'COMPLETED' %}
                 <span class="status-badge completed">Zakończona</span>
+                {% elif status_str == 'CANCELLED' %}
+                <span class="status-badge cancelled">Anulowana</span>
                 {% else %}
-                {{ trip.status.name }}
+                {{ status_str }}
                 {% endif %}
             </td>
+            <td class="arrow-cell">
+                <span id="arrow-{{ trip.id }}" class="arrow-icon">▼</span>
+            </td>
         </tr>
+
+        <tr id="detail-{{ trip.id }}" class="detail-row" style="display: none;">
+            <td colspan="6">
+                <div class="detail-content">
+
+                    <div class="detail-section">
+                        <h4>👤 Dane kontaktowe</h4>
+                        <p><strong>E-mail:</strong> <a href="mailto:{{ trip.traveler.email }}">{{ trip.traveler.email
+                            }}</a></p>
+                    </div>
+
+                    <div class="detail-section" style="flex: 2;">
+                        <h4>🌍 Pełny plan podróży</h4>
+                        <ul class="timeline-list">
+                            {% for stage in trip.stages %}
+                            <li>
+                                    <span class="date-tag">
+                                        {{ stage.start_date.strftime('%d.%m') }} - {{ stage.end_date.strftime('%d.%m') }}
+                                    </span>
+                                <div class="loc-info">
+                                    <strong>{{ stage.location.city.name }}</strong> ({{ stage.location.city.country.name
+                                    }})<br>
+                                    <small>📍 {{ stage.location.address }}</small>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </td>
+        </tr>
+
         {% endfor %}
         </tbody>
     </table>
-    {% elif request.method == 'POST' %}
+    {% elif request.method == 'POST' and not show_modal %}
     <p class="no-results">Brak wyników dla podanych kryteriów.</p>
-    {% else %}
+    {% elif not show_modal %}
     <p class="info-text">Użyj filtrów powyżej, aby znaleźć zgłoszenia.</p>
     {% endif %}
 </div>
 
-<script>
-    function exportCSV() {
-        alert("Rozpoczęto eksport danych do pliku CSV... (funkcja w przygotowaniu)");
-    }
-</script>
+{% if show_modal %}
+<div id="reportModal" class="modal-overlay" style="display: flex;">
+    <div class="modal-content report-card">
+        <div class="modal-header">
+            <h2>Wynik raportu</h2>
+            <span class="close-btn" onclick="closeModal('reportModal')">&times;</span>
+        </div>
+
+        <div class="modal-body">
+            {% if trips %}
+            <div class="table-wrapper">
+                <table class="report-table">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Podróżny</th>
+                        <th>Data rozpoczęcia</th>
+                        <th>Data zakończenia</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for trip in trips %}
+
+                    {% set status_str = trip.status.name if trip.status.name is defined else trip.status|string %}
+
+                    <tr>
+                        <td>#{{ trip.id }}</td>
+                        <td>{{ trip.traveler.first_name }} {{ trip.traveler.last_name }}</td>
+                        <td>
+                            {% if trip.stages %}
+                            {{ trip.stages[0].start_date.strftime('%Y-%m-%d') }}
+                            {% else %} - {% endif %}
+                        </td>
+                        <td>
+                            {% if trip.stages %}
+                            {{ trip.stages[-1].end_date.strftime('%Y-%m-%d') }}
+                            {% else %} - {% endif %}
+                        </td>
+                        <td>
+                            {% if status_str == 'PLANNED' %}
+                            Planowana
+                            {% elif status_str == 'IN_PROGRESS' %}
+                            W trakcie
+                            {% elif status_str == 'COMPLETED' %}
+                            Zakończona
+                            {% elif status_str == 'CANCELLED' %}
+                            Anulowana
+                            {% else %}
+                            {{ status_str }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="count-info">Znaleziono rekordów: <strong>{{ trips|length }}</strong></p>
+            {% else %}
+            <p class="no-results">Brak zgłoszeń spełniających kryteria.</p>
+            {% endif %}
+        </div>
+
+        <div class="modal-footer">
+            <button class="cancel-btn" onclick="closeModal('reportModal')">Zamknij</button>
+            {% if trips %}
+            <button class="csv-btn" onclick="triggerCSVExport()">📂 Eksportuj do CSV</button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div id="successPopup" class="popup-toast">
+    <div class="popup-content">
+        <span class="check-icon">✅</span>
+        <span>Pobrano plik raportu (report.csv)</span>
+    </div>
+</div>
 
 <style>
+    /* STYLE OGÓLNE */
     .filter-box {
         background-color: #f8f9fa;
         padding: 20px;
@@ -133,12 +248,6 @@
         flex-direction: column;
         flex: 1;
         min-width: 150px;
-    }
-
-    .filter-group label {
-        font-size: 0.9em;
-        font-weight: bold;
-        margin-bottom: 5px;
     }
 
     .filter-group input, .filter-group select {
@@ -162,8 +271,8 @@
         cursor: pointer;
     }
 
-    .export-btn {
-        background-color: #28a745;
+    .generate-btn {
+        background-color: #6610f2;
         color: white;
         border: none;
         padding: 10px 20px;
@@ -171,6 +280,7 @@
         cursor: pointer;
     }
 
+    /* TABELA */
     .data-table {
         width: 100%;
         border-collapse: collapse;
@@ -194,24 +304,264 @@
         color: white;
     }
 
-    .status-badge.planned {
+    .planned {
         background-color: #17a2b8;
     }
 
-    .status-badge.progress {
+    .progress {
         background-color: #ffc107;
         color: black;
     }
 
-    .status-badge.completed {
+    .completed {
         background-color: #28a745;
     }
 
-    .back-link {
-        display: inline-block;
+    .cancelled {
+        background-color: #dc3545;
+    }
+
+    /* --- STYLE ROZWIJANIA (MASTER-DETAIL) --- */
+    .summary-row {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .summary-row:hover {
+        background-color: #e2e6ea;
+    }
+
+    /* Ukryta ramka szczegółów */
+    .detail-row td {
+        padding: 0 !important;
+        background-color: #fafafa;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .detail-content {
+        padding: 20px;
+        display: flex;
+        gap: 30px;
+        flex-wrap: wrap;
+        animation: fadeIn 0.4s ease;
+        border-left: 5px solid #007bff; /* Pasek wyróżniający */
+    }
+
+    .detail-section h4 {
+        margin-top: 0;
         margin-bottom: 10px;
-        text-decoration: none;
+        font-size: 0.85rem;
+        color: #555;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .timeline-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .timeline-list li {
+        display: flex;
+        margin-bottom: 12px;
+        align-items: flex-start;
+    }
+
+    .date-tag {
+        background-color: #e9ecef;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        margin-right: 15px;
+        min-width: 80px;
+        text-align: center;
+    }
+
+    .loc-info {
+        font-size: 0.95rem;
+    }
+
+    .loc-info small {
         color: #666;
+        display: block;
+        margin-top: 2px;
+    }
+
+    .arrow-icon {
+        transition: transform 0.3s ease;
+        display: inline-block;
+        color: #888;
+    }
+
+    .summary-row.active .arrow-icon {
+        transform: rotate(180deg);
+        color: #007bff;
+    }
+
+    .summary-row.active {
+        background-color: #f1f8ff;
+        border-left: 5px solid #007bff;
+    }
+
+    /* Wyróżnienie aktywnego wiersza */
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-5px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* MODAL */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        backdrop-filter: blur(2px);
+    }
+
+    .report-card {
+        background: white;
+        width: 95%;
+        max-width: 800px;
+        max-height: 85vh;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8f9fa;
+        border-radius: 8px 8px 0 0;
+    }
+
+    .close-btn {
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+
+    .modal-body {
+        padding: 20px;
+        overflow-y: auto;
+    }
+
+    .report-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+    }
+
+    .report-table th, .report-table td {
+        border-bottom: 1px solid #eee;
+        padding: 10px;
+        text-align: left;
+    }
+
+    .report-table th {
+        background-color: #f1f3f5;
+        position: sticky;
+        top: 0;
+    }
+
+    .modal-footer {
+        padding: 15px 20px;
+        border-top: 1px solid #eee;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .csv-btn {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .cancel-btn {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    /* TOAST */
+    .popup-toast {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%) translateY(100px);
+        background-color: #333;
+        color: white;
+        padding: 15px 25px;
+        border-radius: 50px;
+        opacity: 0;
+        transition: all 0.5s ease;
+        z-index: 2000;
+    }
+
+    .popup-toast.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+
+    .popup-content {
+        display: flex;
+        gap: 10px;
     }
 </style>
+
+<script>
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    function triggerCSVExport() {
+        const popup = document.getElementById('successPopup');
+        popup.classList.add('show');
+        setTimeout(() => {
+            popup.classList.remove('show');
+        }, 3000);
+    }
+
+    function toggleTripDetails(tripId) {
+        const detailRow = document.getElementById('detail-' + tripId);
+        const summaryRow = document.getElementById('summary-' + tripId);
+
+        if (detailRow) {
+            if (detailRow.style.display === 'none') {
+                detailRow.style.display = 'table-row';
+                if (summaryRow) summaryRow.classList.add('active');
+            } else {
+                detailRow.style.display = 'none';
+                if (summaryRow) summaryRow.classList.remove('active');
+            }
+        }
+    }
+</script>
 {% endblock %}

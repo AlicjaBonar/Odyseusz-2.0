@@ -115,6 +115,9 @@ class Traveler(UserMixin, Base):
     id_card_number = Column(String, unique=True)
     login = Column(String, unique=True, nullable=False)
     password_hash = Column(String, nullable=False)
+    pref_sms = Column(Boolean, default=False)
+    pref_email = Column(Boolean, default=False)
+    pref_push = Column(Boolean, default=True)
 
     trips = relationship("Trip", back_populates="traveler")
     companions = relationship("Companion", back_populates="added_by_traveler")

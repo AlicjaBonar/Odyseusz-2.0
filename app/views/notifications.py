@@ -139,3 +139,37 @@ def mark_notification_read(notification_id):
     g.db.commit()
 
     return jsonify({"success": True}), 200
+
+
+
+
+#pobieranie preferencji powiadomień
+@notifications_bp.route('/travelers/<pesel>/preferences', methods=['GET'])
+def get_preferences(pesel):
+    traveler = g.db.query(Traveler).filter(Traveler.pesel == pesel).first()
+    if not traveler:
+        return jsonify({"error": "Nie znaleziono podróżnego"}), 404
+
+    return jsonify({
+        "sms": traveler.pref_sms,
+        "email": traveler.pref_email,
+        "push": traveler.pref_push
+    })
+
+
+#zapisywanie nowych preferencji
+@notifications_bp.route('/travelers/<pesel>/preferences', methods=['POST'])
+def save_preferences(pesel):
+    data = request.get_json()
+    traveler = g.db.query(Traveler).filter(Traveler.pesel == pesel).first()
+
+    if not traveler:
+        return jsonify({"error": "Nie znaleziono podróżnego"}), 404
+
+    traveler.pref_sms = data.get('sms', False)
+    traveler.pref_email = data.get('email', False)
+    traveler.pref_push = data.get('push', False)
+
+    g.db.commit()
+
+    return jsonify({"message": "Zapisano preferencje"}), 200
