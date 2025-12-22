@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Ewakuacje - Odyseusz 2.0{% endblock %}
+
+{% block content %}
+<div class="register-card">
+    <h1>Lista ewakuacji</h1>
+    <p class="subtitle">Przegląd wszystkich akcji ewakuacyjnych</p>
+
+    {% if evacuations %}
+        <div class="evacuation-list">
+            {% for e in evacuations %}
+                <div class="evacuation-item">
+
+                    <div class="evacuation-main">
+                        <h3>{{ e.action_name }}</h3>
+
+                        <p class="evacuation-meta">
+                            <strong>Status:</strong>
+                            <span class="status-badge status-{{ e.status|lower }}">
+                                {{ e.status }}
+                            </span>
+                        </p>
+                        <p class="evacuation-meta">
+                            <strong>Start:</strong> {{ e.start_date_str }}
+                        </p>
+
+                        <p class="evacuation-meta">
+                            <strong>Koniec:</strong> {{ e.end_date_str }}
+                        </p>
+
+                        <p class="evacuation-meta">
+                            <strong>Opis:</strong> {{ e.event_description }}
+                        </p>
+                    </div>
+
+                    <div class="evacuation-actions">
+                        <a href="/evacuations/{{ e.id }}/edit" class="btn">
+                            Edytuj
+                        </a>
+                    </div>
+
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p style="text-align:center; color: var(--text-secondary);">
+            Brak ewakuacji do wyświetlenia.
+        </p>
+    {% endif %}
+</div>
+{% endblock %}

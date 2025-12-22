@@ -377,6 +377,33 @@ body {
     transform: translateY(0);
 }
 
+.btnRed {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9375rem;
+    border-radius: var(--radius);
+    transition: var(--transition);
+    box-shadow: 0 4px 10px rgba(30, 64, 175, 0.3);
+    font-family: inherit;
+}
+
+.btnRed:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(30, 64, 175, 0.4);
+    background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+}
+
+.btnRed:active {
+    transform: translateY(0);
+}
+
 
 /* ============================================== */
 /* MENU                                           */
@@ -685,4 +712,164 @@ body {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
+}
+
+.radio-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-right: 1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+
+.radio-label input {
+    accent-color: var(--primary);
+}
+
+.hidden {
+    display: none;
+}
+
+.form-group textarea,
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="datetime-local"],
+.form-group select {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.form-group textarea:focus,
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--primary-light);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group textarea::placeholder,
+.form-group input::placeholder {
+    color: var(--gray-300);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.5;
+}
+
+.form-group input[type="datetime-local"] {
+    color-scheme: light;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+.modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+.modal.hidden {
+    display: none;
+}
+.modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+}
+.modal-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: space-around;
+}
+
+.evacuation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.evacuation-item {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.evacuation-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.evacuation-main h3 {
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.evacuation-meta {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0.15rem 0;
+}
+
+.evacuation-actions {
+    flex-shrink: 0;
+}
+
+/* STATUS BADGES */
+.status-badge {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.status-planned {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.status-in_progress {
+    background: #fef9c3;
+    color: #92400e;
+}
+
+.status-completed {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-canceled {
+    background: #fee2e2;
+    color: #991b1b;
 }

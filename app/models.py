@@ -11,6 +11,14 @@ class TripStatus(PyEnum):
     PLANNED = "planned"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
+    CANCELED = "canceled"
+
+
+class EvacuationStatus(PyEnum):
+    PLANNED = "planned"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    CANCELED = "canceled"
 
 
 trip_companion_association = Table(
@@ -131,8 +139,8 @@ class Evacuation(Base):
     action_name = Column(String)
     start_date = Column(DateTime)
     end_date = Column(DateTime)
+    status = Column(Enum(EvacuationStatus), nullable=False, default=EvacuationStatus.PLANNED)
     event_description = Column(String)
-
     trips = relationship("Trip", back_populates="evacuation")
     evacuation_areas = relationship("EvacuationArea", back_populates="evacuation")
 
@@ -187,3 +195,4 @@ class Notification(Base):
 
     # Relacja
     traveler = relationship("Traveler", backref="notifications")
+

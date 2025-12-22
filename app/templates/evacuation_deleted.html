@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Ewakuacja usunięta - Odyseusz 2.0{% endblock %}
+
+{% block content %}
+<div class="register-card" style="text-align:center;">
+
+    <div style="font-size:3rem; margin-bottom:1rem;">
+        🗑️
+    </div>
+
+    <h1>Ewakuacja została usunięta</h1>
+    <p class="subtitle">
+        Dane ewakuacji zostały trwale usunięte z systemu.
+    </p>
+
+    <div style="margin-top:1.5rem; color: var(--text-secondary); font-size:0.95rem;">
+        <p>
+            Operacja zakończyła się powodzeniem. Usuniętych danych nie można przywrócić.
+        </p>
+    </div>
+
+    <div class="form-actions" style="margin-top:2rem; display:flex; gap:1rem; justify-content:center;">
+        <a href="/evacuations" class="btn">
+            Powrót do listy ewakuacji
+        </a>
+    </div>
+
+</div>
+{% endblock %}

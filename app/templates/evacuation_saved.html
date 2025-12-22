@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Zapisano ewakuację - Odyseusz 2.0{% endblock %}
+
+{% block content %}
+<div class="register-card" style="text-align:center;">
+
+    <div style="font-size:3rem; margin-bottom:1rem;">
+        ✅
+    </div>
+
+    <h1>Dane zostały zapisane</h1>
+    <p class="subtitle">
+        Informacje o ewakuacji zostały pomyślnie zapisane w systemie.
+    </p>
+
+    <div style="margin-top:1.5rem; color: var(--text-secondary); font-size:0.95rem;">
+        <p>
+            Możesz teraz wrócić do listy ewakuacji lub kontynuować pracę w systemie.
+        </p>
+    </div>
+
+    <div class="form-actions" style="margin-top:2rem; display:flex; gap:1rem; justify-content:center;">
+        <a href="/evacuations" class="btn">
+            Lista ewakuacji
+        </a>
+        {% if evacuation_id %}
+        <a href="/evacuations/{{ evacuation_id }}/edit" class="btn">
+            Edytuj ewakuację
+        </a>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

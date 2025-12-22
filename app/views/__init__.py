@@ -8,6 +8,7 @@ from .app import app_bp
 from .notifications import notifications_bp
 from .stages import stages_bp
 from .companions import companions_bp
+from .evacuations import evacuations_bp
 
 # lista wszystkich blueprintów w jednym miejscu
 all_blueprints = [
@@ -20,5 +21,6 @@ all_blueprints = [
     app_bp,
     notifications_bp,
     stages_bp,
-    companions_bp
+    companions_bp,
+    evacuations_bp
 ]
