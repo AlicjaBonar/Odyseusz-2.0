@@ -1,10 +1,12 @@
-from flask import Blueprint, render_template, request, g, flash
+from flask import Blueprint, render_template, request, g, flash, make_response
 
 from app.database.database import SessionLocal
 from app.models import Trip, Stage, Location, City, Country, TripStatus
 from flask_login import login_required, current_user
 from sqlalchemy import or_, and_, cast, Date, func
 from sqlalchemy.orm import joinedload
+import csv
+import io
 
 app_bp = Blueprint("app_bp", __name__)
 
@@ -89,6 +91,29 @@ def travelers_trips_page():
     return render_template("travelers_trips.html", traveler=traveler, trips=trips)
 
 
+def get_filtered_trips(db, country, date_from, date_to, status):
+
+    query = db.query(Trip).options(
+        joinedload(Trip.traveler),
+        joinedload(Trip.stages).joinedload(Stage.location).joinedload(Location.city).joinedload(City.country)
+    ).join(Trip.stages).join(Stage.location).join(Location.city).join(City.country)
+
+    if country:
+        query = query.filter(Country.name.ilike(f"%{country}%"))
+
+    if status:
+        query = query.filter(Trip.status == status)
+
+    if date_from and date_to:
+        query = query.filter(
+            and_(
+                func.date(Stage.start_date) <= date_to,
+                func.date(Stage.end_date) >= date_from
+            )
+        )
+
+    return query.distinct().order_by(Trip.id.desc()).all()
+
 
 @app_bp.route("/reports", methods=["GET", "POST"])
 def reports_page():
@@ -101,13 +126,6 @@ def reports_page():
     filter_date_to = ""
     filter_status = ""
 
-    query = db.query(Trip).options(
-        joinedload(Trip.traveler),
-        joinedload(Trip.stages).joinedload(Stage.location).joinedload(Location.city).joinedload(City.country)
-    )
-
-    query = query.join(Trip.stages).join(Stage.location).join(Location.city).join(City.country)
-
     if request.method == "POST":
         filter_country = request.form.get("country")
         filter_date_from = request.form.get("date_from")
@@ -115,25 +133,10 @@ def reports_page():
         filter_status = request.form.get("status")
 
         action = request.form.get("action")
-
         if action == "report":
             show_modal = True
 
-        if filter_country:
-            query = query.filter(Country.name.ilike(f"%{filter_country}%"))
-
-        if filter_status:
-            query = query.filter(Trip.status == filter_status)
-
-        if filter_date_from and filter_date_to:
-            query = query.filter(
-                and_(
-                    func.date(Stage.start_date) <= filter_date_to,
-                    func.date(Stage.end_date) >= filter_date_from
-                )
-            )
-
-        trips = query.distinct().order_by(Trip.id.desc()).all()
+        trips = get_filtered_trips(db, filter_country, filter_date_from, filter_date_to, filter_status)
 
     db.close()
 
@@ -146,3 +149,54 @@ def reports_page():
         f_date_to=filter_date_to,
         f_status=filter_status
     )
+
+
+@app_bp.route("/download_report_csv")
+@login_required
+def download_report_csv():
+    filter_country = request.args.get("country", "")
+    filter_date_from = request.args.get("date_from", "")
+    filter_date_to = request.args.get("date_to", "")
+    filter_status = request.args.get("status", "")
+
+    db = SessionLocal
+    trips = get_filtered_trips(db, filter_country, filter_date_from, filter_date_to, filter_status)
+    db.close()
+
+    si = io.StringIO()
+    cw = csv.writer(si, delimiter=";")
+    cw.writerow(["ID", "Podrozny", "Data rozpoczecia", "Data zakonczenia", "Status"])
+
+    status_map = {
+        'PLANNED': 'Planowana',
+        'IN_PROGRESS': 'W trakcie',
+        'COMPLETED': 'Zakończona',
+        'CANCELLED': 'Anulowana'
+    }
+
+    for trip in trips:
+        start_d = trip.stages[0].start_date.strftime('%Y-%m-%d') if trip.stages else ""
+        end_d = trip.stages[-1].end_date.strftime('%Y-%m-%d') if trip.stages else ""
+        stat_name = status_map.get(trip.status.name, trip.status.name)
+
+        traveler_name = f"{trip.traveler.first_name} {trip.traveler.last_name}"
+
+        cw.writerow([trip.id, traveler_name, start_d, end_d, stat_name])
+
+    if (filter_country == "" and filter_status == ""):
+        file_name = f"{filter_date_from}_{filter_date_to}.csv"
+    elif (filter_country == ""):
+        file_name = f"{filter_date_from}_{filter_date_to}_{filter_status}.csv"
+    elif (filter_status == ""):
+        file_name = f"{filter_country}_{filter_date_from}_{filter_date_to}.csv"
+    else:
+        file_name = f"{filter_country}_{filter_date_from}_{filter_date_to}_{filter_status}.csv"
+
+    output = make_response(si.getvalue().encode('utf-8-sig'))
+    output.headers["Content-Disposition"] = f"attachment; filename={file_name}"
+    output.headers["Content-type"] = "text/csv"
+
+    return output
+
+
+

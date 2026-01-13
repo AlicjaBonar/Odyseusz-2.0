@@ -6,7 +6,7 @@
 <div class="reports-container">
     <h1>Zgłoszenia i Raporty</h1>
 
-    <a href="/employee_dashboard" class="back-link">← Wróć do dashboardu</a>
+    <a href="/employee_dashboard" class="back-btn">← Powrót</a>
     <hr>
 
     <div class="filter-box">
@@ -19,12 +19,12 @@
 
                 <div class="filter-group">
                     <label>Data od:</label>
-                    <input type="date" name="date_from" value="{{ f_date_from }}">
+                    <input type="date" name="date_from" id="dateFrom" value="{{ f_date_from }}">
                 </div>
 
                 <div class="filter-group">
                     <label>Data do:</label>
-                    <input type="date" name="date_to" value="{{ f_date_to }}">
+                    <input type="date" name="date_to" id="dateTo" value="{{ f_date_to }}">
                 </div>
 
                 <div class="filter-group">
@@ -42,7 +42,9 @@
 
             <div class="filter-actions">
                 <button type="submit" name="action" value="search" class="search-btn">🔍 Szukaj</button>
-                <button type="submit" name="action" value="report" class="generate-btn">📄 Generuj raport</button>
+                <button type="submit" name="action" value="report" id="generateBtn" class="generate-btn" disabled
+                        title="Wybierz zakres dat, aby wygenerować raport">📄 Generuj raport
+                </button>
             </div>
         </form>
     </div>
@@ -169,9 +171,7 @@
                     </thead>
                     <tbody>
                     {% for trip in trips %}
-
                     {% set status_str = trip.status.name if trip.status.name is defined else trip.status|string %}
-
                     <tr>
                         <td>#{{ trip.id }}</td>
                         <td>{{ trip.traveler.first_name }} {{ trip.traveler.last_name }}</td>
@@ -219,21 +219,41 @@
 </div>
 {% endif %}
 
-<div id="successPopup" class="popup-toast">
-    <div class="popup-content">
-        <span class="check-icon">✅</span>
-        <span>Pobrano plik raportu (report.csv)</span>
+<div id="csvPopup" class="popup-toast">
+    <div class="popup-content-wrapper">
+        <div class="popup-icon">📂</div>
+        <div class="popup-text">
+            <strong>Raport jest gotowy!</strong><br>
+            <a id="downloadLink" href="#" class="download-link">Kliknij tutaj, aby pobrać plik CSV</a>
+        </div>
+        <span class="close-popup" onclick="hideCsvPopup()">&times;</span>
     </div>
 </div>
 
 <style>
-    /* STYLE OGÓLNE */
     .filter-box {
         background-color: #f8f9fa;
         padding: 20px;
         border-radius: 8px;
         margin-bottom: 20px;
         border: 1px solid #ddd;
+    }
+
+    .back-btn {
+        display: inline-block;
+        padding: 8px 16px;
+        background-color: #6c757d;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+        transition: background-color 0.2s;
+        border: none;
+    }
+
+    .back-btn:hover {
+        background-color: #5a6268;
     }
 
     .filter-row {
@@ -278,9 +298,19 @@
         padding: 10px 20px;
         border-radius: 4px;
         cursor: pointer;
+        transition: background-color 0.3s;
     }
 
-    /* TABELA */
+    .generate-btn:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+    .generate-btn:not(:disabled):hover {
+        background-color: #520dc2;
+    }
+
     .data-table {
         width: 100%;
         border-collapse: collapse;
@@ -321,7 +351,6 @@
         background-color: #dc3545;
     }
 
-    /* --- STYLE ROZWIJANIA (MASTER-DETAIL) --- */
     .summary-row {
         cursor: pointer;
         transition: background-color 0.2s;
@@ -331,7 +360,6 @@
         background-color: #e2e6ea;
     }
 
-    /* Ukryta ramka szczegółów */
     .detail-row td {
         padding: 0 !important;
         background-color: #fafafa;
@@ -344,7 +372,7 @@
         gap: 30px;
         flex-wrap: wrap;
         animation: fadeIn 0.4s ease;
-        border-left: 5px solid #007bff; /* Pasek wyróżniający */
+        border-left: 5px solid #007bff;
     }
 
     .detail-section h4 {
@@ -406,8 +434,6 @@
         background-color: #f1f8ff;
         border-left: 5px solid #007bff;
     }
-
-    /* Wyróżnienie aktywnego wiersza */
 
     @keyframes fadeIn {
         from {
@@ -510,42 +536,120 @@
         cursor: pointer;
     }
 
+    /* NOWY POPUP STYLE */
     .popup-toast {
         position: fixed;
         bottom: 30px;
         left: 50%;
-        transform: translateX(-50%) translateY(100px);
-        background-color: #333;
-        color: white;
+        transform: translateX(-50%) translateY(150px); /* Ukryty */
+        background-color: white;
+        color: #333;
         padding: 15px 25px;
-        border-radius: 50px;
-        opacity: 0;
-        transition: all 0.5s ease;
+        border-radius: 8px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         z-index: 2000;
+        border-left: 5px solid #28a745;
+        min-width: 320px;
     }
 
     .popup-toast.show {
         transform: translateX(-50%) translateY(0);
-        opacity: 1;
     }
 
-    .popup-content {
+    .popup-content-wrapper {
         display: flex;
-        gap: 10px;
+        align-items: center;
+        gap: 15px;
+        position: relative;
+    }
+
+    .popup-icon {
+        font-size: 2rem;
+    }
+
+    .popup-text {
+        font-size: 0.95rem;
+    }
+
+    .download-link {
+        color: #007bff;
+        text-decoration: underline;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .download-link:hover {
+        color: #0056b3;
+    }
+
+    .close-popup {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        font-size: 1.2rem;
+        cursor: pointer;
+        color: #999;
+        width: 20px;
+        height: 20px;
+        text-align: center;
+        line-height: 20px;
+    }
+
+    .close-popup:hover {
+        color: #333;
     }
 </style>
 
 <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const dateFrom = document.getElementById('dateFrom');
+        const dateTo = document.getElementById('dateTo');
+        const generateBtn = document.getElementById('generateBtn');
+
+        function checkDates() {
+            if (dateFrom.value && dateTo.value) {
+                generateBtn.disabled = false;
+                generateBtn.title = "";
+            } else {
+                generateBtn.disabled = true;
+                generateBtn.title = "Wybierz zakres dat, aby wygenerować raport";
+            }
+        }
+
+        if (dateFrom && dateTo) {
+            dateFrom.addEventListener('change', checkDates);
+            dateTo.addEventListener('change', checkDates);
+            checkDates();
+        }
+    });
+
     function closeModal(modalId) {
         document.getElementById(modalId).style.display = 'none';
     }
 
+    function hideCsvPopup() {
+        document.getElementById('csvPopup').classList.remove('show');
+    }
+
     function triggerCSVExport() {
-        const popup = document.getElementById('successPopup');
+        const country = document.querySelector('input[name="country"]').value;
+        const dateFrom = document.querySelector('input[name="date_from"]').value;
+        const dateTo = document.querySelector('input[name="date_to"]').value;
+        const status = document.querySelector('select[name="status"]').value;
+
+        const baseUrl = "{{ url_for('app_bp.download_report_csv') }}";
+        const finalUrl = `${baseUrl}?country=${encodeURIComponent(country)}&date_from=${dateFrom}&date_to=${dateTo}&status=${status}`;
+
+        const linkElement = document.getElementById('downloadLink');
+        linkElement.href = finalUrl;
+
+        const popup = document.getElementById('csvPopup');
         popup.classList.add('show');
-        setTimeout(() => {
-            popup.classList.remove('show');
-        }, 3000);
+
+        linkElement.onclick = function () {
+            setTimeout(hideCsvPopup, 1000);
+        };
     }
 
     function toggleTripDetails(tripId) {
