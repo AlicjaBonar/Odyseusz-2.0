@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Wyślij powiadomienie{% endblock %}
+
+{% block content %}
+<div class="push-container">
+    <h1>📢 Wyślij powiadomienie PUSH</h1>
+    <a href="/employee_dashboard" class="back-btn">← Wróć do dashboardu</a>
+    <hr>
+
+    <div class="push-form-box">
+        <form action="{{ url_for('app_bp.send_push_page') }}" method="POST">
+
+            <div class="form-group">
+                <label>Treść wiadomości:</label>
+                <textarea name="message" rows="4" required
+                          placeholder="Wpisz treść ostrzeżenia lub komunikatu..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Odbiorcy:</label>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="target_type" value="all" checked onchange="toggleCountryInput()">
+                        Wszyscy (z włączonym PUSH)
+                    </label>
+                    <label>
+                        <input type="radio" name="target_type" value="country" onchange="toggleCountryInput()">
+                        Tylko przebywający obecnie w kraju...
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group" id="countryInputGroup" style="display: none;">
+                <label>Podaj nazwę kraju:</label>
+                <input type="text" name="country_name" placeholder="np. Niemcy">
+                <small class="hint">Wiadomość trafi tylko do osób, które mają aktywny etap podróży w tym kraju w dniu
+                    dzisiejszym.</small>
+            </div>
+
+            <button type="submit" class="send-btn">🚀 Wyślij wiadomość</button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .push-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .push-form-box {
+        background: #f8f9fa;
+        padding: 30px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group label {
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+
+    .form-group textarea, .form-group input[type="text"] {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-family: inherit;
+    }
+
+    .radio-group label {
+        display: block;
+        margin-bottom: 10px;
+        cursor: pointer;
+    }
+
+    .hint {
+        color: #666;
+        font-size: 0.85em;
+        margin-top: 5px;
+    }
+
+    .send-btn {
+        background-color: #dc3545; /* Czerwony dla uwagi */
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        font-size: 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.3s;
+        width: 100%;
+    }
+
+    .send-btn:hover {
+        background-color: #c82333;
+    }
+
+    .back-btn {
+        display: inline-block;
+        margin-bottom: 15px;
+        color: #555;
+        text-decoration: none;
+    }
+</style>
+
+<script>
+    function toggleCountryInput() {
+        const countryGroup = document.getElementById('countryInputGroup');
+        const countryRadio = document.querySelector('input[name="target_type"][value="country"]');
+        const countryInput = document.querySelector('input[name="country_name"]');
+
+        if (countryRadio.checked) {
+            countryGroup.style.display = 'flex';
+            countryInput.required = true;
+        } else {
+            countryGroup.style.display = 'none';
+            countryInput.required = false;
+            countryInput.value = "";
+        }
+    }
+</script>
+{% endblock %}
