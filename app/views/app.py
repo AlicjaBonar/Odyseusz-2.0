@@ -1,12 +1,13 @@
-from flask import Blueprint, render_template, request, g, flash, make_response
+from flask import Blueprint, render_template, request, g, flash, make_response, redirect, url_for
 
 from app.database.database import SessionLocal
-from app.models import Trip, Stage, Location, City, Country, TripStatus
+from app.models import Trip, Stage, Location, City, Country, TripStatus, Traveler, Notification
 from flask_login import login_required, current_user
 from sqlalchemy import or_, and_, cast, Date, func
 from sqlalchemy.orm import joinedload
 import csv
 import io
+from datetime import date, datetime
 
 app_bp = Blueprint("app_bp", __name__)
 
@@ -199,4 +200,45 @@ def download_report_csv():
     return output
 
 
+@app_bp.route("/employee/send_push", methods=["GET", "POST"])
+@login_required
+def send_push_page():
+    if request.method == "POST":
+        message_body = request.form.get("message")
+        target_type = request.form.get("target_type")
+        target_country = request.form.get("country_name")
 
+        db = SessionLocal()
+
+        query = db.query(Traveler).filter(Traveler.pref_push == True)
+
+        if target_type == "country" and target_country:
+            today = date.today()
+            query = query.join(Trip).join(Stage).join(Location).join(City).join(Country)
+            query = query.filter(
+                Trip.status == 'IN_PROGRESS',
+                and_(Stage.start_date <= today, Stage.end_date >= today),
+                Country.name.ilike(f"%{target_country}%")
+            )
+
+        recipients = query.distinct().all()
+
+        count = 0
+        for traveler in recipients:
+            new_notification = Notification(
+                traveler_pesel=traveler.pesel,
+                message=message_body,
+
+                is_read=False,
+                created_at=datetime.now()
+            )
+            db.add(new_notification)
+            count += 1
+
+        db.commit()
+        db.close()
+
+        flash(f"Wysłano powiadomienie PUSH do {count} podróżnych.", "success")
+        return redirect(url_for("app_bp.send_push_page"))
+
+    return render_template("send_push.html")

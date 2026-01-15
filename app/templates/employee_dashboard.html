@@ -28,6 +28,15 @@
                 <span class="menu-arrow">›</span>
             </a>
 
+            <a href="{{ url_for('app_bp.send_push_page') }}" class="menu-item active-item alert-item">
+                <span class="menu-icon">📢</span>
+                <div class="menu-text">
+                    <strong>Wyślij powiadomienie</strong>
+                    <small>Wyślij ostrzeżenie PUSH do podróżnych</small>
+                </div>
+                <span class="menu-arrow">›</span>
+            </a>
+
             <div class="menu-item inactive-item" onclick="alert('Ta funkcja jest w przygotowaniu.');">
                 <span class="menu-icon">⚙️</span>
                 <div class="menu-text">
@@ -123,6 +132,29 @@
         cursor: pointer;
     }
 
+    /* Efekt po najechaniu na aktywne elementy */
+    .active-item:hover {
+        background-color: #f8f9fa;
+        transform: translateX(5px);
+        border-color: #ddd;
+    }
+
+    /* --- STYL DLA NOWEGO KAFELKA POWIADOMIEŃ --- */
+    .alert-item {
+        border-left: 5px solid #dc3545; /* Czerwony pasek */
+    }
+
+    .alert-item:hover {
+        background-color: #fff5f5; /* Lekko czerwone tło po najechaniu */
+    }
+
+    /* ------------------------------------------- */
+
+    .inactive-item {
+        opacity: 0.6;
+        background-color: #f9f9f9;
+        cursor: not-allowed;
+    }
 
     .menu-icon {
         font-size: 24px;
