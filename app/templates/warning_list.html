@@ -59,27 +59,27 @@
             </tr>
         </thead>
         <tbody>
-            {% for alert in [
-                {'id': 101, 'content': 'Zakaz wjazdu...', 'validity': '2026-05-10', 'status': 'active'},
-                {'id': 102, 'content': 'Wymagane dodatkowe dokumenty...', 'validity': '2024-11-20', 'status': 'expired'},
-                {'id': 103, 'content': 'Wstrzymana wiza...', 'validity': '2027-01-01', 'status': 'active'}
-            ] %}
-            <tr>
-                <td>{{ alert.id }}</td>
-                <td>{{ alert.content|truncate(20) }}</td>
-                <td>{{ alert.validity }}</td>
+            {% for alert in alerts %} <tr>
+                <td>{{ alert.external_id }}</td>
+                <td>{{ alert.content|truncate(30) }}</td>
+                <td>{{ alert.expiry_date.strftime('%Y-%m-%d') }}</td>
                 <td>
-                    {% if alert.status == 'active' %}
+                    {# Prosta logika sprawdzająca datę dla statusu #}
+                    {% if alert.expiry_date > now %}
                         <span class="status-badge status-active">Aktywne</span>
                     {% else %}
                         <span class="status-badge status-expired">Wygasłe</span>
                     {% endif %}
                 </td>
                 <td>
-                    <a href="{{ url_for('app_bp.warning_edit_page') }}" class="btn" style="padding: 6px 10px; font-size: 0.8rem;">
+                    <a href="#" class="btn" style="padding: 6px 10px; font-size: 0.8rem;">
                         Edytuj
                     </a>
                 </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center;">Brak ostrzeżeń w bazie danych. Uruchom skrypt synchronizacji.</td>
             </tr>
             {% endfor %}
         </tbody>

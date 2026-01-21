@@ -1,0 +1,18 @@
+<warnings>
+    <warning>
+        <idZewnetrzne>101</idZewnetrzne>
+        <nazwa>Zakaz wjazdu do regionu X - AKTUALIZACJA</nazwa>
+        <tresc>Sytuacja pogodowa uległa pogorszeniu.</tresc>
+        <typ>Pogodowe</typ>
+        <poziomZagrozenia>EXTREME</poziomZagrozenia>
+        <dataWaznosci>2026-06-10</dataWaznosci>
+    </warning>
+    <warning>
+        <idZewnetrzne>103</idZewnetrzne>
+        <nazwa>Wstrzymana wiza</nazwa>
+        <tresc>Konsulat wstrzymał wydawanie wiz typu C.</tresc>
+        <typ>Administracyjne</typ>
+        <poziomZagrozenia>MEDIUM</poziomZagrozenia>
+        <dataWaznosci>2027-01-01</dataWaznosci>
+    </warning>
+</warnings>
