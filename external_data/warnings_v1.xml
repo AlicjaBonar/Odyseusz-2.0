@@ -1,0 +1,10 @@
+<warnings>
+    <warning>
+        <idZewnetrzne>101</idZewnetrzne>
+        <nazwa>Zakaz wjazdu do regionu X</nazwa>
+        <tresc>Z powodu powodzi zakazuje się wjazdu.</tresc>
+        <typ>Pogodowe</typ>
+        <poziomZagrozenia>HIGH</poziomZagrozenia>
+        <dataWaznosci>2026-05-10</dataWaznosci>
+    </warning>
+</warnings>

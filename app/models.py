@@ -20,6 +20,11 @@ class EvacuationStatus(PyEnum):
     COMPLETED = "completed"
     CANCELED = "canceled"
 
+class ThreatLevel(PyEnum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    EXTREME = "extreme"
 
 trip_companion_association = Table(
     "trip_companion",
@@ -208,6 +213,25 @@ class Notification(Base):
     created_at = Column(DateTime, default=datetime.now)
     is_read = Column(Boolean, default=False)
 
-    # Relacja
     traveler = relationship("Traveler", backref="notifications")
 
+warning_location_association = Table(
+    "warning_location",
+    Base.metadata,
+    Column("warning_id", Integer, ForeignKey("consular_warnings.id"), primary_key=True),
+    Column("location_id", Integer, ForeignKey("locations.id"), primary_key=True)
+)
+
+class ConsularWarning(Base):
+    __tablename__ = "consular_warnings"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    external_id = Column(String, unique=True, index=True, nullable=False) 
+    name = Column(String, nullable=False)                              
+    content = Column(String, nullable=False)                      
+    warning_type = Column(String, nullable=False)                
+    threat_level = Column(Enum(ThreatLevel), nullable=False)      
+    publication_date = Column(DateTime, default=datetime.now)           
+    expiry_date = Column(DateTime, nullable=False)                         
+
+    locations = relationship("Location", secondary=warning_location_association)

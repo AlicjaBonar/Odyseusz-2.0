@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request, g, flash, make_response, 
 from app.database.database import SessionLocal
 from app.models import Trip, Stage, Location, City, Country, TripStatus, Traveler, Notification
 from flask_login import login_required, current_user
+from app.repositories.warning_repository import warning_repo
 from sqlalchemy import or_, and_, cast, Date, func
 from sqlalchemy.orm import joinedload
 import csv
@@ -25,7 +26,13 @@ def register_employee_page():
 
 @app_bp.route("/warning_list_page")
 def warning_list_page():
-    return render_template("warning_list.html")
+    db_alerts = warning_repo.get_all() 
+    
+    return render_template(
+        'warning_list.html', 
+        alerts=db_alerts, 
+        now=datetime.now()
+    )
 
 @app_bp.route("/warning_edit_page")
 def warning_edit_page():
