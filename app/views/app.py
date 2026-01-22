@@ -210,12 +210,12 @@ def download_report_csv():
 @app_bp.route("/employee/send_push", methods=["GET", "POST"])
 @login_required
 def send_push_page():
+    db = SessionLocal()
+
     if request.method == "POST":
         message_body = request.form.get("message")
         target_type = request.form.get("target_type")
-        target_country = request.form.get("country_name")
-
-        db = SessionLocal()
+        target_country = request.form.get("country_name")  # Teraz tu przyjdzie nazwa z listy
 
         query = db.query(Traveler).filter(Traveler.pref_push == True)
 
@@ -225,7 +225,7 @@ def send_push_page():
             query = query.filter(
                 Trip.status == 'IN_PROGRESS',
                 and_(Stage.start_date <= today, Stage.end_date >= today),
-                Country.name.ilike(f"%{target_country}%")
+                Country.name == target_country
             )
 
         recipients = query.distinct().all()
@@ -235,7 +235,6 @@ def send_push_page():
             new_notification = Notification(
                 traveler_pesel=traveler.pesel,
                 message=message_body,
-
                 is_read=False,
                 created_at=datetime.now()
             )
@@ -248,4 +247,8 @@ def send_push_page():
         flash(f"Wysłano powiadomienie PUSH do {count} podróżnych.", "success")
         return redirect(url_for("app_bp.send_push_page"))
 
-    return render_template("send_push.html")
+
+    all_countries = db.query(Country).order_by(Country.name).all()
+    db.close()
+
+    return render_template("send_push.html", countries=all_countries)

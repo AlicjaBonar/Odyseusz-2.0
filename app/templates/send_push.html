@@ -32,8 +32,13 @@
             </div>
 
             <div class="form-group" id="countryInputGroup" style="display: none;">
-                <label>Podaj nazwę kraju:</label>
-                <input type="text" name="country_name" placeholder="np. Niemcy">
+                <label>Wybierz kraj z listy:</label>
+                <select name="country_name" class="country-select">
+                    <option value="">-- Wybierz kraj --</option>
+                    {% for country in countries %}
+                    <option value="{{ country.name }}">{{ country.name }}</option>
+                    {% endfor %}
+                </select>
                 <small class="hint">Wiadomość trafi tylko do osób, które mają aktywny etap podróży w tym kraju w dniu
                     dzisiejszym.</small>
             </div>
@@ -67,11 +72,13 @@
         margin-bottom: 8px;
     }
 
-    .form-group textarea, .form-group input[type="text"] {
+    .form-group textarea,
+    .form-group select {
         padding: 10px;
         border: 1px solid #ccc;
         border-radius: 4px;
         font-family: inherit;
+        background-color: white;
     }
 
     .radio-group label {
@@ -87,7 +94,7 @@
     }
 
     .send-btn {
-        background-color: #dc3545; /* Czerwony dla uwagi */
+        background-color: #dc3545;
         color: white;
         border: none;
         padding: 12px 25px;
@@ -114,15 +121,15 @@
     function toggleCountryInput() {
         const countryGroup = document.getElementById('countryInputGroup');
         const countryRadio = document.querySelector('input[name="target_type"][value="country"]');
-        const countryInput = document.querySelector('input[name="country_name"]');
+        const countrySelect = document.querySelector('select[name="country_name"]');
 
         if (countryRadio.checked) {
             countryGroup.style.display = 'flex';
-            countryInput.required = true;
+            countrySelect.required = true;
         } else {
             countryGroup.style.display = 'none';
-            countryInput.required = false;
-            countryInput.value = "";
+            countrySelect.required = false;
+            countrySelect.value = "";
         }
     }
 </script>
