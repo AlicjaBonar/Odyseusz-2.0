@@ -50,58 +50,78 @@ class NotificationService:
         return self._notification_to_dict(notification)
     
     def create_evacuation_notifications(self, evacuation_data: Dict) -> Dict:
-        required_fields = ["city_id", "description"]
+        """
+        Tworzy ewakuację i automatycznie wysyła powiadomienia do podróżnych
+        przebywających w danym kraju lub mieście.
+        """
+        # 1. Walidacja pól wejściowych (dostosowana do Twojego API)
+        required_fields = ["action_name", "event_description", "country_id", "start_date"]
         missing_fields = [field for field in required_fields if field not in evacuation_data]
         if missing_fields:
             raise ValueError(f"Brakujące pola: {missing_fields}")
         
-        city_id = int(evacuation_data["city_id"])
-        description = evacuation_data["description"]
-        action_name = evacuation_data.get("action_name", "Zagrożenie")
+        country_id = int(evacuation_data["country_id"])
+        city_id = int(evacuation_data["city_id"]) if evacuation_data.get("city_id") else None
+        event_description = evacuation_data["event_description"]
+        action_name = evacuation_data["action_name"]
         
-        # Utworzenie ewakuacji
+        # 2. Utworzenie obiektu ewakuacji (płaski model)
         new_evacuation = Evacuation(
             action_name=action_name,
-            event_description=description,
-            start_date=datetime.now()
+            event_description=event_description,
+            start_date=datetime.fromisoformat(evacuation_data["start_date"]),
+            status=EvacuationStatus.PLANNED,
+            country_id=country_id,
+            city_id=city_id
         )
         self.db.add(new_evacuation)
-        self.db.flush()
+        self.db.flush()  # Pobieramy ID dla celów zwrócenia w JSON
         
-        # Utworzenie obszaru ewakuacji
-        # area = EvacuationArea(evacuation_id=new_evacuation.id, city_id=city_id)
-        self.db.add(area)
-        
-        # Znajdź podróżnych w tym mieście
+        # 3. Znalezienie podróżnych przebywających w zagrożonym obszarze
         current_time = datetime.now()
-        affected_travelers = self.db.query(Traveler).join(Trip).join(Stage).join(Location).join(City)\
-            .filter(City.id == city_id)\
-            .filter(and_(Stage.start_date <= current_time, Stage.end_date >= current_time))\
-            .all()
         
-        # Pobierz nazwę miasta
-        city_obj = self.db.query(City).filter(City.id == city_id).first()
-        city_name = city_obj.name if city_obj else "Twojej lokalizacji"
+        # Budujemy bazowe zapytanie łączące podróżnych z ich aktualną lokalizacją
+        query = self.db.query(Traveler).join(Trip).join(Stage).join(Location).join(City)
         
-        # Utworzenie powiadomień
+        # Filtrowanie po czasie (podróż musi trwać w tym momencie)
+        query = query.filter(and_(Stage.start_date <= current_time, Stage.end_date >= current_time))
+        
+        # Filtrowanie po lokalizacji (miasto LUB cały kraj)
+        if city_id:
+            query = query.filter(City.id == city_id)
+            location_name = self.db.query(City.name).filter(City.id == city_id).scalar() or "Twojej lokalizacji"
+        else:
+            query = query.filter(City.country_id == country_id)
+            location_name = self.db.query(Country.name).filter(Country.id == country_id).scalar() or "Twojego kraju"
+        
+        affected_travelers = query.distinct(Traveler.pesel).all()
+        
+        # 4. Utworzenie powiadomień dla każdego znalezionego podróżnego
         notified_count = 0
         for traveler in affected_travelers:
-            msg = f"ALERT: W {city_name} wystąpiło zagrożenie: {description}. Postępuj zgodnie z instrukcjami."
+            msg = f"ALERT EWAKUACYJNY: W {location_name} ogłoszono akcję: {action_name}. {event_description}. Prosimy o kontakt z konsulatem."
             
             notification = Notification(
                 traveler_pesel=traveler.pesel,
                 message=msg,
-                created_at=current_time
+                created_at=current_time,
+                is_read=False
             )
             self.db.add(notification)
             notified_count += 1
         
-        self.db.commit()
+        # 5. Zapisanie wszystkich zmian w jednej transakcji
+        try:
+            self.db.commit()
+        except Exception as e:
+            self.db.rollback()
+            raise Exception(f"Błąd bazy danych: {str(e)}")
         
         return {
-            "message": "Alarm ogłoszony pomyślnie",
+            "message": "Ewakuacja utworzona i alarm wysłany",
             "affected_travelers_count": notified_count,
-            "evacuation_id": new_evacuation.id
+            "evacuation_id": new_evacuation.id,
+            "location": location_name
         }
     
     def get_notification_by_id(self, notification_id: int) -> Optional[Dict]:
