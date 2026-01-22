@@ -4,7 +4,7 @@
 
 {% block head %}
 <style>
-    /* Stylowanie lokalne – spójne z systemem */
+    /* Stylowanie karty podróży */
     .trip-card {
         background: #fff;
         padding: 25px;
@@ -16,6 +16,7 @@
     .trip-card h2 {
         margin-bottom: 20px;
         font-size: 22px;
+        color: var(--primary-dark);
     }
 
     .input-field {
@@ -25,32 +26,73 @@
         border: 1px solid #ccc;
         margin-bottom: 15px;
         font-size: 15px;
+        transition: border-color 0.2s;
     }
 
-    select.input-field {
-        cursor: pointer;
+    /* Styl dla zablokowanych pól daty */
+    .input-readonly {
+        background-color: #f1f3f5 !important;
+        cursor: not-allowed;
+        color: #6c757d;
+        border: 1px solid #dee2e6;
+    }
+
+    .input-error {
+        border: 2px solid #e74c3c !important;
+    }
+
+    .error-text {
+        color: #e74c3c;
+        font-size: 12px;
+        margin-top: -10px;
+        margin-bottom: 10px;
+        display: none;
+        font-weight: bold;
     }
 
     .stage {
         background: #f8f9fc;
-        padding: 15px;
+        padding: 20px;
         border-radius: 8px;
-        margin-bottom: 10px;
+        margin-bottom: 20px;
         border: 1px solid #e2e6f0;
+        position: relative;
     }
 
-    .stage input {
-        margin-bottom: 8px;
+    .stage-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .date-group {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 5px;
+    }
+
+    .date-group div {
+        flex: 1;
+    }
+
+    .date-group label {
+        display: block;
+        font-size: 12px;
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #495057;
     }
 
     .removeStageBtn {
         background: #e74c3c;
         color: #fff;
         border: none;
-        padding: 6px 10px;
+        padding: 6px 12px;
         border-radius: 6px;
         cursor: pointer;
-        margin-top: 5px;
+        font-size: 12px;
+        font-weight: 600;
     }
 
     .removeStageBtn:hover {
@@ -61,10 +103,13 @@
         margin-top: 10px;
         background: var(--primary-light);
         color: var(--primary-dark);
-        border: none;
-        padding: 8px 14px;
-        border-radius: 6px;
+        border: 2px dashed var(--primary);
+        padding: 12px;
+        border-radius: 8px;
         cursor: pointer;
+        width: 100%;
+        font-weight: 600;
+        transition: all 0.2s;
     }
 
     #addStageBtn:hover {
@@ -72,29 +117,33 @@
         color: #fff;
     }
 
-    button[type="submit"] {
-        margin-top: 20px;
+    .form-actions {
+        margin-top: 30px;
+        text-align: center;
     }
 
     #tripMessage {
+        margin-top: 15px;
         font-weight: bold;
-        padding-top: 10px;
+        text-align: center;
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="trip-card">
-    <h2>Rejestracja podróży</h2>
+    <h2>Rejestracja nowej podróży</h2>
     <form id="tripForm">
         <input type="hidden" name="traveler_pesel" value="{{ traveler.pesel }}">
-        <input type="hidden" name="status" value="planned">
 
-        <h3>Etapy podróży</h3>
-        <div id="stagesContainer"></div>
+        <div id="stagesContainer">
+            </div>
 
-        <button type="button" id="addStageBtn" class="btn-secondary">+ Dodaj etap</button>
-        <button type="submit" class="btn">Zarejestruj podróż</button>
+        <button type="button" id="addStageBtn">+ Dodaj kolejny etap podróży</button>
+
+        <div class="form-actions">
+            <button type="submit" class="btn">Zarejestruj podróż</button>
+        </div>
     </form>
     <div id="tripMessage"></div>
 </div>
@@ -107,10 +156,9 @@ const tripMessage = document.getElementById('tripMessage');
 const stagesContainer = document.getElementById('stagesContainer');
 const addStageBtn = document.getElementById('addStageBtn');
 
-// Słownik na kraje, żeby nie pobierać ich za każdym razem przy dodawaniu etapu
 let countriesCache = [];
 
-// Pobierz listę krajów przy starcie
+// 1. Pobieranie listy krajów
 async function fetchCountries() {
     try {
         const res = await fetch('/countries');
@@ -120,19 +168,67 @@ async function fetchCountries() {
     }
 }
 
+// 2. Walidacja dat (czy wyjazd nie jest przed przyjazdem)
+function validateStageDates(stageDiv) {
+    const startInput = stageDiv.querySelector('.start-date-input');
+    const endInput = stageDiv.querySelector('.end-date-input');
+    const errorText = stageDiv.querySelector('.error-text');
+    
+    if (startInput.value && endInput.value) {
+        const startDate = new Date(startInput.value);
+        const endDate = new Date(endInput.value);
+
+        if (endDate < startDate) {
+            endInput.classList.add('input-error');
+            errorText.style.display = 'block';
+            errorText.textContent = "Błąd: Data wyjazdu jest wcześniej niż data przyjazdu!";
+            return false;
+        } else {
+            endInput.classList.remove('input-error');
+            errorText.style.display = 'none';
+            return true;
+        }
+    }
+    return true;
+}
+
+// 3. Dodawanie nowego etapu
 async function addStage() {
     if (countriesCache.length === 0) await fetchCountries();
 
+    const stageCount = stagesContainer.querySelectorAll('.stage').length + 1;
+    
+    // Pobierz datę zakończenia poprzedniego etapu
+    let lastEndDate = "";
+    const lastStage = stagesContainer.lastElementChild;
+    if (lastStage) {
+        lastEndDate = lastStage.querySelector('[name="end_date"]').value;
+    }
+
     const div = document.createElement('div');
     div.className = 'stage';
-    
     div.innerHTML = `
-        <label>Data od - do:</label>
-        <div style="display: flex; gap: 10px;">
-            <input type="date" name="start_date" class="input-field" required>
-            <input type="date" name="end_date" class="input-field" required>
+        <div class="stage-header">
+            <strong>Etap #${stageCount}</strong>
+            ${stageCount > 1 ? '<button type="button" class="removeStageBtn">Usuń ten etap</button>' : ''}
         </div>
 
+        <div class="date-group">
+            <div>
+                <label>Data przyjazdu ${stageCount > 1 ? '(Zablokowana)' : ''}</label>
+                <input type="date" name="start_date" 
+                       class="input-field start-date-input ${stageCount > 1 ? 'input-readonly' : ''}" 
+                       ${stageCount > 1 ? 'readonly' : ''} 
+                       required value="${lastEndDate}">
+            </div>
+            <div>
+                <label>Data wyjazdu</label>
+                <input type="date" name="end_date" class="input-field end-date-input" required>
+            </div>
+        </div>
+        <div class="error-text"></div>
+
+        <label style="font-size: 12px; font-weight: bold;">Lokalizacja</label>
         <select class="input-field country-select" required>
             <option value="">-- Wybierz kraj --</option>
             ${countriesCache.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
@@ -143,20 +239,38 @@ async function addStage() {
         </select>
 
         <input type="text" name="address" class="input-field address-input" 
-               placeholder="Wpisz adres (np. ul. Polna 1/2)" disabled required>
-
-        <button type="button" class="removeStageBtn">Usuń etap</button>
+               placeholder="Adres pobytu (np. nazwa hotelu)" disabled required>
     `;
 
     stagesContainer.appendChild(div);
 
+    // Selektory dla tego konkretnego etapu
     const countrySelect = div.querySelector('.country-select');
     const citySelect = div.querySelector('.city-select');
     const addressInput = div.querySelector('.address-input');
+    const startInput = div.querySelector('.start-date-input');
+    const endInput = div.querySelector('.end-date-input');
 
+    // Obsługa zmiany daty wyjazdu (synchronizacja z następnym etapem)
+    endInput.addEventListener('change', () => {
+        validateStageDates(div);
+        const nextStage = div.nextElementSibling;
+        if (nextStage) {
+            const nextStartInput = nextStage.querySelector('.start-date-input');
+            nextStartInput.value = endInput.value;
+            validateStageDates(nextStage);
+        }
+    });
+
+    // Blokada dla pierwszego etapu (może zmieniać datę startu)
+    if (stageCount === 1) {
+        startInput.addEventListener('change', () => validateStageDates(div));
+    }
+
+    // Dynamiczne miasta
     countrySelect.addEventListener('change', async () => {
         const countryId = countrySelect.value;
-        citySelect.innerHTML = '<option value="">Ładowanie miast...</option>';
+        citySelect.innerHTML = '<option value="">Ładowanie...</option>';
         citySelect.disabled = true;
         addressInput.disabled = true;
 
@@ -165,13 +279,9 @@ async function addStage() {
         try {
             const res = await fetch(`/countries/${countryId}/cities`);
             const cities = await res.json();
-            
             citySelect.innerHTML = '<option value="">-- Wybierz miasto --</option>';
             cities.forEach(city => {
-                const opt = document.createElement('option');
-                opt.value = city.id;
-                opt.textContent = city.name;
-                citySelect.appendChild(opt);
+                citySelect.innerHTML += `<option value="${city.id}">${city.name}</option>`;
             });
             citySelect.disabled = false;
         } catch (err) {
@@ -179,37 +289,75 @@ async function addStage() {
         }
     });
 
-    // Po wybraniu miasta odblokowujemy wpisywanie adresu
     citySelect.addEventListener('change', () => {
         addressInput.disabled = !citySelect.value;
     });
 
-    div.querySelector('.removeStageBtn').addEventListener('click', () => div.remove());
+    // Usuwanie etapu
+    if (stageCount > 1) {
+        div.querySelector('.removeStageBtn').addEventListener('click', () => {
+            const nextStage = div.nextElementSibling;
+            const prevStage = div.previousElementSibling;
+            div.remove();
+            
+            // Re-synchronizacja sąsiadów po usunięciu środka
+            if (prevStage && nextStage) {
+                nextStage.querySelector('.start-date-input').value = prevStage.querySelector('.end-date-input').value;
+                validateStageDates(nextStage);
+            }
+            renumberStages();
+        });
+    }
 }
 
+// 4. Przenumerowanie etapów
+function renumberStages() {
+    stagesContainer.querySelectorAll('.stage').forEach((div, index) => {
+        div.querySelector('.stage-header strong').textContent = `Etap #${index + 1}`;
+    });
+}
+
+// 5. Inicjalizacja formularza
+fetchCountries().then(() => addStage());
 addStageBtn.addEventListener('click', addStage);
 
-// Inicjalizacja
-fetchCountries().then(() => addStage());
-
-// SUBMIT FORMULARZA
+// 6. Przesyłanie danych
 tripForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const formData = new FormData(tripForm);
     
+    const allStagesDivs = stagesContainer.querySelectorAll('.stage');
+    let isAllValid = true;
+    
+    // Sprawdzenie walidacji przed wysyłką
+    allStagesDivs.forEach(stageDiv => {
+        if (!validateStageDates(stageDiv)) isAllValid = false;
+    });
+
+    if (!isAllValid) {
+        tripMessage.textContent = "Błąd: Popraw nieprawidłowe daty etapów.";
+        tripMessage.style.color = "red";
+        return;
+    }
+
     const stages = [];
-    stagesContainer.querySelectorAll('.stage').forEach(div => {
+    allStagesDivs.forEach(div => {
         stages.push({
             start_date: div.querySelector('[name="start_date"]').value,
             end_date: div.querySelector('[name="end_date"]').value,
-            city_id: parseInt(div.querySelector('[name="city_id"]').value), // Wysyłamy ID miasta
-            address: div.querySelector('[name="address"]').value          // Wysyłamy surowy adres
+            city_id: parseInt(div.querySelector('[name="city_id"]').value),
+            address: div.querySelector('[name="address"]').value
         });
     });
 
+    // LOGIKA STATUSU
+    // Dziś: 2026-01-22. Jeśli podróż zaczyna się wcześniej -> planned
+    const firstStartDate = new Date(stages[0].start_date);
+    const today = new Date("2026-01-22");
+    const status = (firstStartDate > today) ? "planned" : "in_progress";
+
     const payload = {
-        traveler_pesel: formData.get('traveler_pesel'),
-        status: formData.get('status'),
+        traveler_pesel: document.querySelector('[name="traveler_pesel"]').value,
+        status: status,
         stages: stages
     };
 
@@ -222,13 +370,15 @@ tripForm.addEventListener('submit', async (e) => {
         const result = await res.json();
 
         if (res.ok) {
+            // Przekierowanie do osób towarzyszących po sukcesie
             window.location.href = `/add_companions_to_travel?traveler_pesel=${payload.traveler_pesel}&trip_id=${result.id}`;
         } else {
-            tripMessage.textContent = `Błąd: ${result.error}`;
-            tripMessage.className = "error-msg";
+            tripMessage.textContent = "Błąd serwera: " + result.error;
+            tripMessage.style.color = "red";
         }
     } catch (err) {
-        tripMessage.textContent = `Błąd sieci: ${err.message}`;
+        tripMessage.textContent = "Błąd połączenia z serwerem.";
+        tripMessage.style.color = "red";
     }
 });
 </script>

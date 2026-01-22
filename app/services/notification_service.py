@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from datetime import datetime
 from typing import Dict, Optional, List
-from app.models import Notification, Traveler, Trip, Stage, Location, City, Evacuation
+from app.models import Notification, Traveler, Trip, Stage, Location, City, Evacuation, EvacuationStatus
 from app.repositories.notification_repository import NotificationRepository
 from app.repositories.traveler_repository import TravelerRepository
 

@@ -873,3 +873,39 @@ body {
     background: #fee2e2;
     color: #991b1b;
 }
+
+.input-error {
+        border: 2px solid #e74c3c !important;
+        background-color: #fdf2f2;
+    }
+
+    .error-text {
+        color: #e74c3c;
+        font-size: 11px;
+        margin-top: -10px;
+        margin-bottom: 10px;
+        display: none;
+    }
+
+    .stage.has-error {
+        border-color: #e74c3c;
+    }
+
+    /* Styl dla zablokowanych pól */
+    .input-readonly {
+        background-color: #e9ecef !important;
+        cursor: not-allowed;
+        color: #6c757d;
+    }
+    
+    .date-group {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .date-group div { flex: 1; }
+    .date-group label { font-size: 12px; font-weight: bold; display: block; margin-bottom: 4px; }
+    
+    .input-error { border: 2px solid #e74c3c !important; }
+    .error-text { color: #e74c3c; font-size: 12px; margin-bottom: 10px; display: none; }
