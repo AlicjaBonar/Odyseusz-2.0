@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from datetime import datetime
 from typing import Dict, Optional, List
-from app.models import Notification, Traveler, Trip, Stage, Location, City, Evacuation, EvacuationArea
+from app.models import Notification, Traveler, Trip, Stage, Location, City, Evacuation
 from app.repositories.notification_repository import NotificationRepository
 from app.repositories.traveler_repository import TravelerRepository
 
@@ -69,7 +69,7 @@ class NotificationService:
         self.db.flush()
         
         # Utworzenie obszaru ewakuacji
-        area = EvacuationArea(evacuation_id=new_evacuation.id, city_id=city_id)
+        # area = EvacuationArea(evacuation_id=new_evacuation.id, city_id=city_id)
         self.db.add(area)
         
         # Znajdź podróżnych w tym mieście

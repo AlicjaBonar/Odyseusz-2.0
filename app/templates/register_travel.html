@@ -86,27 +86,16 @@
 {% block content %}
 <div class="trip-card">
     <h2>Rejestracja podróży</h2>
-
     <form id="tripForm">
-
         <input type="hidden" name="traveler_pesel" value="{{ traveler.pesel }}">
-
-        <label>Status podróży:</label>
-        <select id="statusSelect" name="status" class="input-field" required>
-            <option value="planned">Planowana</option>
-            <option value="in_progress">W trakcie</option>
-            <option value="completed">Zakończona</option>
-        </select>
+        <input type="hidden" name="status" value="planned">
 
         <h3>Etapy podróży</h3>
-
         <div id="stagesContainer"></div>
 
         <button type="button" id="addStageBtn" class="btn-secondary">+ Dodaj etap</button>
-
         <button type="submit" class="btn">Zarejestruj podróż</button>
     </form>
-
     <div id="tripMessage"></div>
 </div>
 {% endblock %}
@@ -118,41 +107,109 @@ const tripMessage = document.getElementById('tripMessage');
 const stagesContainer = document.getElementById('stagesContainer');
 const addStageBtn = document.getElementById('addStageBtn');
 
-function addStage() {
+// Słownik na kraje, żeby nie pobierać ich za każdym razem przy dodawaniu etapu
+let countriesCache = [];
+
+// Pobierz listę krajów przy starcie
+async function fetchCountries() {
+    try {
+        const res = await fetch('/countries');
+        countriesCache = await res.json();
+    } catch (err) {
+        console.error("Błąd pobierania krajów:", err);
+    }
+}
+
+async function addStage() {
+    if (countriesCache.length === 0) await fetchCountries();
+
     const div = document.createElement('div');
     div.className = 'stage';
+    
     div.innerHTML = `
-        <input type="date" name="start_date" class="input-field" required>
-        <input type="date" name="end_date" class="input-field" required>
-        <input type="number" name="location_id" class="input-field" placeholder="ID lokalizacji" required>
+        <label>Data od - do:</label>
+        <div style="display: flex; gap: 10px;">
+            <input type="date" name="start_date" class="input-field" required>
+            <input type="date" name="end_date" class="input-field" required>
+        </div>
+
+        <select class="input-field country-select" required>
+            <option value="">-- Wybierz kraj --</option>
+            ${countriesCache.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+        </select>
+
+        <select class="input-field city-select" name="city_id" disabled required>
+            <option value="">-- Najpierw wybierz kraj --</option>
+        </select>
+
+        <input type="text" name="address" class="input-field address-input" 
+               placeholder="Wpisz adres (np. ul. Polna 1/2)" disabled required>
+
         <button type="button" class="removeStageBtn">Usuń etap</button>
     `;
+
     stagesContainer.appendChild(div);
+
+    const countrySelect = div.querySelector('.country-select');
+    const citySelect = div.querySelector('.city-select');
+    const addressInput = div.querySelector('.address-input');
+
+    countrySelect.addEventListener('change', async () => {
+        const countryId = countrySelect.value;
+        citySelect.innerHTML = '<option value="">Ładowanie miast...</option>';
+        citySelect.disabled = true;
+        addressInput.disabled = true;
+
+        if (!countryId) return;
+
+        try {
+            const res = await fetch(`/countries/${countryId}/cities`);
+            const cities = await res.json();
+            
+            citySelect.innerHTML = '<option value="">-- Wybierz miasto --</option>';
+            cities.forEach(city => {
+                const opt = document.createElement('option');
+                opt.value = city.id;
+                opt.textContent = city.name;
+                citySelect.appendChild(opt);
+            });
+            citySelect.disabled = false;
+        } catch (err) {
+            citySelect.innerHTML = '<option value="">Błąd ładowania</option>';
+        }
+    });
+
+    // Po wybraniu miasta odblokowujemy wpisywanie adresu
+    citySelect.addEventListener('change', () => {
+        addressInput.disabled = !citySelect.value;
+    });
 
     div.querySelector('.removeStageBtn').addEventListener('click', () => div.remove());
 }
 
 addStageBtn.addEventListener('click', addStage);
-addStage(); // domyślny etap
 
+// Inicjalizacja
+fetchCountries().then(() => addStage());
+
+// SUBMIT FORMULARZA
 tripForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-
-    const formData = Object.fromEntries(new FormData(tripForm));
-
+    const formData = new FormData(tripForm);
+    
     const stages = [];
     stagesContainer.querySelectorAll('.stage').forEach(div => {
-        const inputs = div.querySelectorAll('input');
         stages.push({
-            start_date: inputs[0].value,
-            end_date: inputs[1].value,
-            location_id: parseInt(inputs[2].value)
+            start_date: div.querySelector('[name="start_date"]').value,
+            end_date: div.querySelector('[name="end_date"]').value,
+            city_id: parseInt(div.querySelector('[name="city_id"]').value), // Wysyłamy ID miasta
+            address: div.querySelector('[name="address"]').value          // Wysyłamy surowy adres
         });
     });
 
     const payload = {
-        traveler_pesel: formData.traveler_pesel,
-        status: formData.status,
+        traveler_pesel: formData.get('traveler_pesel'),
+        status: formData.get('status'),
         stages: stages
     };
 
@@ -165,15 +222,13 @@ tripForm.addEventListener('submit', async (e) => {
         const result = await res.json();
 
         if (res.ok) {
-            window.location.href =
-                `/add_companions_to_travel?traveler_pesel=${formData.traveler_pesel}&trip_id=${result.id}`;
+            window.location.href = `/add_companions_to_travel?traveler_pesel=${payload.traveler_pesel}&trip_id=${result.id}`;
         } else {
             tripMessage.textContent = `Błąd: ${result.error}`;
-            tripMessage.style.color = "red";
+            tripMessage.className = "error-msg";
         }
     } catch (err) {
         tripMessage.textContent = `Błąd sieci: ${err.message}`;
-        tripMessage.style.color = "red";
     }
 });
 </script>

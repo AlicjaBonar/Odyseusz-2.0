@@ -36,6 +36,12 @@ class Country(Base):
     consulates = relationship("Consulate", back_populates="country")
     cities = relationship("City", back_populates="country")
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name
+        }
+
 class Consulate(Base):
     __tablename__ = "consulates"
     id = Column(Integer, primary_key=True, index=True)
@@ -77,7 +83,13 @@ class City(Base):
     # Relationships
     country = relationship("Country", back_populates="cities")
     locations = relationship("Location", back_populates="city")
-    evacuation_areas = relationship("EvacuationArea", back_populates="city")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "country_id": self.country_id
+        }
 
 class Location(Base):
     __tablename__ = "locations"
@@ -140,19 +152,22 @@ class Evacuation(Base):
     start_date = Column(DateTime)
     end_date = Column(DateTime)
     status = Column(Enum(EvacuationStatus), nullable=False, default=EvacuationStatus.PLANNED)
-    event_description = Column(String)
+    event_description = Column(String, nullable=True)
     trips = relationship("Trip", back_populates="evacuation")
-    evacuation_areas = relationship("EvacuationArea", back_populates="evacuation")
+    country_id = Column(Integer, ForeignKey("countries.id"), nullable=False)
+    city_id = Column(Integer, ForeignKey("cities.id"), nullable=True) # null, jeśli ewakuacja całego kraju
 
-class EvacuationArea(Base):
-    __tablename__ = "evacuation_areas"
-    id = Column(Integer, primary_key=True, index=True)
-
-    evacuation_id = Column(Integer, ForeignKey("evacuations.id"))
-    city_id = Column(Integer, ForeignKey("cities.id"))
-
-    evacuation = relationship("Evacuation", back_populates="evacuation_areas")
-    city = relationship("City", back_populates="evacuation_areas")
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "action_name": self.action_name,
+            "start_date": self.start_date.isoformat() if self.start_date else None,
+            "end_date": self.end_date.isoformat() if self.end_date else None,
+            "status": self.status.value,
+            "event_description": self.event_description,
+            "country_id": self.country_id,
+            "city_id": self.city_id
+        }
 
 class Trip(Base):
     __tablename__ = "trips"

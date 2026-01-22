@@ -2,81 +2,71 @@
 
 {% block title %}Tworzenie ewakuacji - Odyseusz 2.0{% endblock %}
 
+{% block head %}
+<style>
+    .hidden { display: none; }
+    .form-group { margin-bottom: 1.2rem; }
+    label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+    .radio-label, .checkbox-label { font-weight: normal; display: inline-block; margin-right: 15px; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="register-card">
     <h1>Tworzenie ewakuacji</h1>
     <p class="subtitle">Zdefiniuj zakres i harmonogram ewakuacji</p>
 
     <form id="evacuationForm" class="loginForm">
-
-        <!-- POLE NAZWY -->
         <div class="form-group">
-            <input type="text" name="action_name" placeholder="Nazwa akcji ewakuacyjnej" required>
+            <input type="text" name="action_name" placeholder="Nazwa akcji ewakuacyjnej" class="form-control" required>
         </div>
 
-        <!-- POLE OPISU -->
         <div class="form-group">
-            <textarea name="event_description"
-                    placeholder="Opis ewakuacji (sytuacja, zagrożenia, zalecenia)"
-                    rows="4"
-                    required></textarea>
+            <textarea name="event_description" placeholder="Opis ewakuacji..." rows="4" class="form-control" required></textarea>
         </div>
         
-        <!-- DATA ROZPOCZECIA -->
         <div class="form-group">
             <label>Data rozpoczęcia:</label>
-            <input type="datetime-local" name="start_date" required>
+            <input type="datetime-local" name="start_date" class="form-control" required>
         </div>
 
-        <!-- DATA ZAKOŃCZENIA -->
         <div class="form-group" id="endDateGroup">
             <label>Data zakończenia:</label>
-            <input type="datetime-local" name="end_date" id="endDateInput">
+            <input type="datetime-local" name="end_date" id="endDateInput" class="form-control">
         </div>
         <div class="form-group">
             <label class="checkbox-label">
-                <input type="checkbox" id="noEndDate">
-                Data zakończenia nieokreślona
+                <input type="checkbox" id="noEndDate"> Data zakończenia nieokreślona
             </label>
         </div>
 
-        <!-- WYBÓR ZAKRESU -->
         <div class="form-group">
+            <label>Zakres ewakuacji:</label>
             <label class="radio-label">
-                <input type="radio" name="scope" value="country" checked>
-                Ewakuacja kraju
+                <input type="radio" name="scope" value="country" checked> Ewakuacja kraju
             </label>
             <label class="radio-label">
-                <input type="radio" name="scope" value="city">
-                Ewakuacja miasta
+                <input type="radio" name="scope" value="city"> Ewakuacja miasta
             </label>
         </div>
 
-        <!-- KRAJ -->
         <div class="form-group" id="countryGroup">
-            <select name="country_id" class="form-control">
-                <option value="">Wybierz kraj</option>
-                {% for country in countries %}
-                    <option value="{{ country.id }}">{{ country.name }}</option>
-                {% endfor %}
+            <label>Kraj:</label>
+            <select name="country_id" id="countrySelect" class="form-control" required>
+                <option value="">Ładowanie krajów...</option>
             </select>
         </div>
 
-        <!-- MIASTO -->
         <div class="form-group hidden" id="cityGroup">
-            <select name="city_id" class="form-control">
-                <option value="">Wybierz miasto</option>
-                {% for city in cities %}
-                    <option value="{{ city.id }}">{{ city.name }} ({{ city.country.name }})</option>
-                {% endfor %}
+            <label>Miasto:</label>
+            <select name="city_id" id="citySelect" class="form-control">
+                <option value="">Wybierz kraj, aby zobaczyć miasta</option>
             </select>
         </div>
 
-        <!-- PRZYCISK -->
         <div class="form-actions" style="text-align:center; margin-top:1.5rem;">
             <button type="submit" class="btn">Utwórz ewakuację</button>
         </div>
-        
     </form>
 
     <div id="message" style="margin-top:1rem; text-align:center;"></div>
@@ -85,62 +75,128 @@
 
 {% block scripts %}
 <script>
-    // WYBÓR ZAKRESU
+    const countrySelect = document.getElementById('countrySelect');
+    const citySelect = document.getElementById('citySelect');
     const scopeRadios = document.querySelectorAll('input[name="scope"]');
-    const countryGroup = document.getElementById('countryGroup');
     const cityGroup = document.getElementById('cityGroup');
+    const form = document.getElementById('evacuationForm');
 
+    // --- NOWA FUNKCJA: POBIERANIE MIAST ---
+    async function updateCities() {
+        const countryId = countrySelect.value;
+        const currentScope = document.querySelector('input[name="scope"]:checked').value;
+
+        // Czyścimy listę miast, jeśli nie ma kraju lub zmieniliśmy na zakres "kraj"
+        if (!countryId || currentScope !== 'city') {
+            citySelect.innerHTML = '<option value="">Wybierz kraj, aby zobaczyć miasta</option>';
+            return;
+        }
+
+        citySelect.innerHTML = '<option value="">Ładowanie miast...</option>';
+        
+        try {
+            const res = await fetch(`/countries/${countryId}/cities`);
+            if (!res.ok) throw new Error("Błąd pobierania");
+            const cities = await res.json();
+            
+            citySelect.innerHTML = '<option value="">-- Wybierz miasto --</option>';
+            cities.forEach(city => {
+                const opt = document.createElement('option');
+                opt.value = city.id;
+                opt.textContent = city.name;
+                citySelect.appendChild(opt);
+            });
+        } catch (e) {
+            citySelect.innerHTML = '<option value="">Błąd ładowania miast</option>';
+        }
+    }
+
+    // 1. POBIERANIE KRAJÓW PRZY STARCIE (bez zmian)
+    async function loadCountries() {
+        try {
+            const res = await fetch('/countries');
+            const countries = await res.json();
+            
+            countrySelect.innerHTML = '<option value="">-- Wybierz kraj --</option>';
+            countries.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.name;
+                countrySelect.appendChild(opt);
+            });
+        } catch (e) {
+            countrySelect.innerHTML = '<option value="">Błąd ładowania krajów</option>';
+        }
+    }
+
+    // 2. REAKCJA NA ZMIANĘ KRAJU
+    countrySelect.addEventListener('change', updateCities);
+
+    // 3. REAKCJA NA ZMIANĘ ZAKRESU (Kraj/Miasto)
     scopeRadios.forEach(radio => {
         radio.addEventListener('change', () => {
-            if (radio.value === 'country') {
-                countryGroup.classList.remove('hidden');
-                cityGroup.classList.add('hidden');
-            } else {
+            if (radio.value === 'city') {
                 cityGroup.classList.remove('hidden');
-                countryGroup.classList.add('hidden');
+                citySelect.required = true;
+                // WYWOŁUJEMY AKTUALIZACJĘ: jeśli kraj był już wybrany, dociągnie miasta
+                updateCities(); 
+            } else {
+                cityGroup.classList.add('hidden');
+                citySelect.required = false;
+                citySelect.value = "";
             }
         });
     });
 
-    // DATA ZAKOŃCZENIA NIEOKREŚLONA
+    // 4. DATA ZAKOŃCZENIA (bez zmian)
     const noEndDateCheckbox = document.getElementById('noEndDate');
     const endDateGroup = document.getElementById('endDateGroup');
     const endDateInput = document.getElementById('endDateInput');
 
     noEndDateCheckbox.addEventListener('change', () => {
-        if (noEndDateCheckbox.checked) {
-            endDateGroup.style.display = 'none';
-            endDateInput.required = false;
-        } else {
-            endDateGroup.style.display = 'block';
-            endDateInput.required = true;
-        }
+        endDateGroup.classList.toggle('hidden', noEndDateCheckbox.checked);
+        endDateInput.required = !noEndDateCheckbox.checked;
     });
 
-    // SUBMIT FORMULARZA
-    const form = document.getElementById('evacuationForm');
+    // 5. WYSYŁKA FORMULARZA (bez zmian)
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const formData = new FormData(form);
+        const scope = formData.get('scope');
 
-        const data = Object.fromEntries(new FormData(form));
-        if (noEndDateCheckbox.checked) data.end_date = null;
+        const payload = {
+            action_name: formData.get('action_name'),
+            event_description: formData.get('event_description'), // Musi być tak samo jak w Service
+            start_date: formData.get('start_date'),
+            end_date: noEndDateCheckbox.checked ? null : formData.get('end_date'),
+            country_id: parseInt(formData.get('country_id')),
+            city_id: scope === 'city' ? parseInt(formData.get('city_id')) : null
+        };
 
-        const res = await fetch('/evacuations', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
+        try {
+            const res = await fetch('/evacuations/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
 
-        const result = await res.json();
-        const msg = document.getElementById('message');
+            const result = await res.json();
+            const msg = document.getElementById('message');
 
-        if (res.ok) {
-            msg.textContent = "Ewakuacja została utworzona";
-            msg.style.color = "var(--accent)";
-        } else {
-            msg.textContent = result.error || "Błąd podczas tworzenia ewakuacji";
-            msg.style.color = "var(--danger)";
+            if (res.ok) {
+                msg.textContent = "Ewakuacja została pomyślnie utworzona!";
+                msg.style.color = "green";
+                form.reset();
+                cityGroup.classList.add('hidden');
+            } else {
+                msg.textContent = "Błąd: " + (result.error || "Nieznany błąd");
+                msg.style.color = "red";
+            }
+        } catch (err) {
+            console.error(err);
         }
     });
+
+    loadCountries();
 </script>
 {% endblock %}

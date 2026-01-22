@@ -1,52 +1,209 @@
 {% extends "base.html" %}
 
-{% block title %}Ewakuacje - Odyseusz 2.0{% endblock %}
+{% block title %}Lista ewakuacji – Odyseusz 2.0{% endblock %}
+
+{% block head %}
+<style>
+    /* Nagłówek listy z przyciskiem */
+    .list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 25px;
+        border-bottom: 2px solid #f1f2f6;
+        padding-bottom: 15px;
+    }
+
+    .list-header h1 { margin-bottom: 5px; }
+
+    .btn-create {
+        background-color: var(--primary);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: background 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-create:hover {
+        background-color: var(--primary-dark);
+        color: white;
+    }
+
+    .evacuation-list { margin-top: 20px; }
+    
+    .evacuation-item {
+        background: #fff;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: var(--shadow-soft);
+        margin-bottom: 20px;
+        border: 1px solid #e2e6f0;
+        display: flex;
+        justify-content: space-between;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.3s ease;
+    }
+    .evacuation-item.loaded { opacity: 1; transform: translateY(0); }
+
+    .location-info {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        font-weight: 600;
+        color: var(--primary-dark);
+        background: var(--primary-light);
+        padding: 5px 12px;
+        border-radius: 6px;
+    }
+
+    .status-badge {
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    .status-planned { background: #dfe6e9; color: #636e72; }
+    .status-in_progress { background: #ffeaa7; color: #d35400; }
+    .status-completed { background: #55efc4; color: #00b894; }
+    .status-canceled { background: #ff7675; color: #d63031; }
+
+    .loading-spinner { text-align: center; padding: 40px; color: var(--primary); }
+    .hidden { display: none; }
+
+    @media (max-width: 600px) {
+        .list-header { flex-direction: column; gap: 15px; }
+        .btn-create { width: 100%; justify-content: center; }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="register-card">
-    <h1>Lista ewakuacji</h1>
-    <p class="subtitle">Przegląd wszystkich akcji ewakuacyjnych</p>
+    <div class="list-header">
+        <div>
+            <h1>Lista ewakuacji</h1>
+            <p class="subtitle">Dane pobierane na żywo z systemu</p>
+        </div>
+        <a href="/evacuation/create" class="btn-create">
+            <i class="fas fa-plus"></i> + Nowa ewakuacja
+        </a>
+    </div>
 
-    {% if evacuations %}
-        <div class="evacuation-list">
-            {% for e in evacuations %}
-                <div class="evacuation-item">
+    <div id="loading" class="loading-spinner">
+        <i class="fas fa-spinner fa-spin fa-2x"></i>
+        <p>Pobieranie danych z bazy...</p>
+    </div>
 
+    <div id="evacuationList" class="evacuation-list"></div>
+
+    <div id="emptyMessage" class="hidden" style="text-align:center; padding: 40px;">
+        <p>Brak zarejestrowanych akcji ewakuacyjnych.</p>
+        <a href="/evacuation/create" class="btn">Utwórz pierwszą akcję</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const evacuationList = document.getElementById('evacuationList');
+    const loading = document.getElementById('loading');
+    const emptyMessage = document.getElementById('emptyMessage');
+
+    const countryCache = {};
+    const cityCache = {};
+
+    async function getCountryName(id) {
+        if (countryCache[id]) return countryCache[id];
+        try {
+            const res = await fetch('/countries');
+            const countries = await res.json();
+            countries.forEach(c => countryCache[c.id] = c.name);
+            return countryCache[id] || "Nieznany kraj";
+        } catch { return "Błąd kraju"; }
+    }
+
+    async function getCityName(countryId, cityId) {
+        if (!cityId) return null;
+        const cacheKey = `${countryId}-${cityId}`;
+        if (cityCache[cacheKey]) return cityCache[cacheKey];
+
+        try {
+            const res = await fetch(`/countries/${countryId}/cities`);
+            if (!res.ok) throw new Error("Błąd pobierania");
+            const cities = await res.json();
+            
+            cities.forEach(city => {
+                cityCache[`${countryId}-${city.id}`] = city.name;
+            });
+            return cityCache[cacheKey] || "Nieznane miasto";
+        } catch { return "Błąd miasta"; }
+    }
+
+    async function loadEvacuations() {
+        try {
+            // Używamy Twojego endpointu do pobrania wszystkich ewakuacji
+            const res = await fetch('/evacuation/all'); 
+            const evacuations = await res.json();
+
+            if (!evacuations || evacuations.length === 0) {
+                loading.classList.add('hidden');
+                emptyMessage.classList.remove('hidden');
+                return;
+            }
+
+            for (const e of evacuations) {
+                const countryName = await getCountryName(e.country_id);
+                const cityName = await getCityName(e.country_id, e.city_id);
+
+                const item = document.createElement('div');
+                item.className = 'evacuation-item';
+                
+                const locationLabel = cityName ? `${cityName}, ${countryName}` : `Cały kraj: ${countryName}`;
+                const startDate = new Date(e.start_date).toLocaleString();
+                const endDate = e.end_date ? new Date(e.end_date).toLocaleString() : "nieokreślono";
+
+                item.innerHTML = `
                     <div class="evacuation-main">
-                        <h3>{{ e.action_name }}</h3>
-
+                        <div class="location-info">
+                            <i class="fas fa-globe"></i> ${locationLabel}
+                        </div>
+                        <h3>${e.action_name}</h3>
                         <p class="evacuation-meta">
-                            <strong>Status:</strong>
-                            <span class="status-badge status-{{ e.status|lower }}">
-                                {{ e.status }}
+                            <strong>Status:</strong> 
+                            <span class="status-badge status-${e.status}">
+                                ${e.status}
                             </span>
                         </p>
                         <p class="evacuation-meta">
-                            <strong>Start:</strong> {{ e.start_date_str }}
+                            <strong>Termin:</strong> ${startDate} — ${endDate}
                         </p>
-
-                        <p class="evacuation-meta">
-                            <strong>Koniec:</strong> {{ e.end_date_str }}
-                        </p>
-
-                        <p class="evacuation-meta">
-                            <strong>Opis:</strong> {{ e.event_description }}
+                        <p class="evacuation-meta" style="margin-top:10px;">
+                            <strong>Opis:</strong><br>
+                            <span style="color: #666; font-style: italic;">${e.event_description}</span>
                         </p>
                     </div>
-
                     <div class="evacuation-actions">
-                        <a href="/evacuations/{{ e.id }}/edit" class="btn">
-                            Edytuj
-                        </a>
+                        <a href="/evacuations/${e.id}/edit" class="btn" style="padding: 8px 15px; font-size: 14px;">Edytuj</a>
                     </div>
+                `;
+                evacuationList.appendChild(item);
+                setTimeout(() => item.classList.add('loaded'), 50);
+            }
 
-                </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <p style="text-align:center; color: var(--text-secondary);">
-            Brak ewakuacji do wyświetlenia.
-        </p>
-    {% endif %}
-</div>
+            loading.classList.add('hidden');
+        } catch (err) {
+            loading.innerHTML = `<p style="color:red">Błąd połączenia z API: ${err.message}</p>`;
+        }
+    }
+
+    loadEvacuations();
+</script>
 {% endblock %}

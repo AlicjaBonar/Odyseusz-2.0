@@ -2,188 +2,255 @@
 
 {% block title %}Edycja ewakuacji - Odyseusz 2.0{% endblock %}
 
+{% block head %}
+<style>
+    .hidden { display: none; }
+    .form-group { margin-bottom: 1.2rem; }
+    label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+    .radio-label, .checkbox-label { font-weight: normal; display: inline-block; margin-right: 15px; }
+    .modal {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+        z-index: 1000;
+    }
+    .modal-content { background: white; padding: 2rem; border-radius: 10px; text-align: center; }
+    .modal-actions { margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="register-card">
     <h1>Edycja ewakuacji</h1>
-    <p class="subtitle">Edytuj szczegóły ewakuacji</p>
+    <p class="subtitle">Zaktualizuj szczegóły akcji: <strong>{{ evacuation.action_name }}</strong></p>
 
     <form id="editEvacuationForm" class="loginForm">
-
-        <!-- NAZWA -->
         <div class="form-group">
-            <input type="text" name="action_name" placeholder="Nazwa akcji ewakuacyjnej" required value="{{ evacuation.action_name }}">
+            <input type="text" name="action_name" placeholder="Nazwa akcji" class="form-control" required 
+                   value="{{ evacuation.action_name }}">
         </div>
 
-        <!-- OPIS -->
         <div class="form-group">
-            <textarea name="event_description" placeholder="Opis ewakuacji (sytuacja, zagrożenia, zalecenia)" rows="4" required>{{ evacuation.event_description }}</textarea>
+            <textarea name="event_description" placeholder="Opis ewakuacji..." rows="4" class="form-control" required>{{ evacuation.event_description }}</textarea>
         </div>
-
-        <!-- DATA ROZPOCZĘCIA -->
+        
         <div class="form-group">
             <label>Data rozpoczęcia:</label>
-            <input type="datetime-local" name="start_date" required value="{{ evacuation.start_date_str }}">
+            <input type="datetime-local" name="start_date" class="form-control" required 
+                value="{{ evacuation.start_date[:16] if evacuation.start_date }}">
         </div>
 
-        <!-- DATA ZAKOŃCZENIA -->
-        <div class="form-group" id="endDateGroup" {% if not evacuation.end_date_str %}style="display:none;"{% endif %}>
+        <div class="form-group {% if not evacuation.end_date %}hidden{% endif %}" id="endDateGroup">
             <label>Data zakończenia:</label>
-            <input type="datetime-local" name="end_date" id="endDateInput" value="{{ evacuation.end_date_str }}">
+            <input type="datetime-local" name="end_date" id="endDateInput" class="form-control"
+                value="{{ evacuation.end_date[:16] if evacuation.end_date }}">
         </div>
         <div class="form-group">
             <label class="checkbox-label">
-                <input type="checkbox" id="noEndDate" {% if not evacuation.end_date_str %}checked{% endif %}>
+                <input type="checkbox" id="noEndDate" {% if not evacuation.end_date %}checked{% endif %}> 
                 Data zakończenia nieokreślona
             </label>
         </div>
 
-        <!-- WYBÓR ZAKRESU -->
         <div class="form-group">
+            <label>Zakres ewakuacji:</label>
             <label class="radio-label">
-                <input type="radio" name="scope" value="country" {% if evacuation_scope == "country" %}checked{% endif %}>
-                Ewakuacja kraju
+                <input type="radio" name="scope" value="country" {% if not evacuation.city_id %}checked{% endif %}> Ewakuacja kraju
             </label>
             <label class="radio-label">
-                <input type="radio" name="scope" value="city" {% if evacuation_scope == "city" %}checked{% endif %}>
-                Ewakuacja miasta
+                <input type="radio" name="scope" value="city" {% if evacuation.city_id %}checked{% endif %}> Ewakuacja miasta
             </label>
         </div>
 
-        <!-- KRAJ -->
-        <div id="countryGroup" class="form-group {% if evacuation_scope == 'city' %}hidden{% endif %}">
-            <select name="country_id" class="form-control">
-                <option value="">Wybierz kraj</option>
-                {% for country in countries %}
-                    <option value="{{ country.id }}" {% if evacuation.country_id == country.id %}selected{% endif %}>{{ country.name }}</option>
-                {% endfor %}
+        <div class="form-group" id="countryGroup">
+            <label>Kraj:</label>
+            <select name="country_id" id="countrySelect" class="form-control" required>
+                <option value="">Ładowanie krajów...</option>
             </select>
         </div>
 
-        <!-- MIASTO -->
-        <div id="cityGroup" class="form-group {% if evacuation_scope == 'country' %}hidden{% endif %}">
-            <select name="city_id" class="form-control">
-                <option value="">Wybierz miasto</option>
-                {% for city in cities %}
-                    <option value="{{ city.id }}" {% if evacuation.city_id == city.id %}selected{% endif %}>{{ city.name }} ({{ city.country.name }})</option>
-                {% endfor %}
+        <div class="form-group {% if not evacuation.city_id %}hidden{% endif %}" id="cityGroup">
+            <label>Miasto:</label>
+            <select name="city_id" id="citySelect" class="form-control">
+                <option value="">Wybierz kraj, aby zobaczyć miasta</option>
             </select>
         </div>
 
-        <!-- PRZYCISKI -->
         <div class="form-actions" style="text-align:center; margin-top:1.5rem;">
             <button type="submit" class="btn">Zapisz zmiany</button>
             <button type="button" class="btnRed" id="deleteBtn" style="margin-left:1rem;">Usuń ewakuację</button>
         </div>
-        
     </form>
 
     <div id="message" style="margin-top:1rem; text-align:center;"></div>
 </div>
 
-<!-- Modal -->
 <div id="deleteModal" class="modal hidden">
     <div class="modal-content">
-        <h2>Potwierdzenie</h2>
-        <p>Czy na pewno chcesz usunąć tę ewakuację?</p>
+        <h2>Potwierdzenie usunięcia</h2>
+        <p>Czy na pewno chcesz trwale usunąć tę akcję ewakuacyjną?</p>
         <div class="modal-actions">
             <button id="confirmDelete" class="btnRed">Usuń</button>
             <button id="cancelDelete" class="btn">Anuluj</button>
         </div>
     </div>
 </div>
-
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // WYBÓR ZAKRESU
+    const countrySelect = document.getElementById('countrySelect');
+    const citySelect = document.getElementById('citySelect');
     const scopeRadios = document.querySelectorAll('input[name="scope"]');
-    const countryGroup = document.getElementById('countryGroup');
     const cityGroup = document.getElementById('cityGroup');
+    const form = document.getElementById('editEvacuationForm');
+
+    // Dane początkowe z Jinja
+    const initialCountryId = "{{ evacuation.country_id }}";
+    const initialCityId = "{{ evacuation.city_id or '' }}";
+
+    // --- FUNKCJA: POBIERANIE MIAST ---
+    async function updateCities(selectedCityId = null) {
+        const countryId = countrySelect.value;
+        const currentScope = document.querySelector('input[name="scope"]:checked').value;
+
+        if (!countryId || currentScope !== 'city') {
+            citySelect.innerHTML = '<option value="">Wybierz kraj, aby zobaczyć miasta</option>';
+            return;
+        }
+
+        citySelect.innerHTML = '<option value="">Ładowanie miast...</option>';
+        
+        try {
+            const res = await fetch(`/countries/${countryId}/cities`);
+            if (!res.ok) throw new Error("Błąd pobierania");
+            const cities = await res.json();
+            
+            citySelect.innerHTML = '<option value="">-- Wybierz miasto --</option>';
+            cities.forEach(city => {
+                const opt = document.createElement('option');
+                opt.value = city.id;
+                opt.textContent = city.name;
+                if (selectedCityId && city.id == selectedCityId) {
+                    opt.selected = true;
+                }
+                citySelect.appendChild(opt);
+            });
+        } catch (e) {
+            citySelect.innerHTML = '<option value="">Błąd ładowania miast</option>';
+        }
+    }
+
+    // --- POBIERANIE KRAJÓW I INICJALIZACJA ---
+    async function initForm() {
+        try {
+            const res = await fetch('/countries');
+            const countries = await res.json();
+            
+            countrySelect.innerHTML = '<option value="">-- Wybierz kraj --</option>';
+            countries.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.name;
+                if (c.id == initialCountryId) opt.selected = true;
+                countrySelect.appendChild(opt);
+            });
+
+            // Jeśli mamy miasto na starcie, załaduj listę miast
+            if (initialCityId) {
+                await updateCities(initialCityId);
+            }
+        } catch (e) {
+            countrySelect.innerHTML = '<option value="">Błąd ładowania krajów</option>';
+        }
+    }
+
+    countrySelect.addEventListener('change', () => updateCities());
 
     scopeRadios.forEach(radio => {
         radio.addEventListener('change', () => {
-            if (radio.value === 'country') {
-                countryGroup.classList.remove('hidden');
-                cityGroup.classList.add('hidden');
-            } else {
+            if (radio.value === 'city') {
                 cityGroup.classList.remove('hidden');
-                countryGroup.classList.add('hidden');
+                citySelect.required = true;
+                updateCities(); 
+            } else {
+                cityGroup.classList.add('hidden');
+                citySelect.required = false;
+                citySelect.value = "";
             }
         });
     });
 
-    // DATA ZAKOŃCZENIA NIEOKREŚLONA
     const noEndDateCheckbox = document.getElementById('noEndDate');
     const endDateGroup = document.getElementById('endDateGroup');
     const endDateInput = document.getElementById('endDateInput');
 
     noEndDateCheckbox.addEventListener('change', () => {
-        if (noEndDateCheckbox.checked) {
-            endDateGroup.style.display = 'none';
-            endDateInput.required = false;
-        } else {
-            endDateGroup.style.display = 'block';
-            endDateInput.required = true;
-        }
+        endDateGroup.classList.toggle('hidden', noEndDateCheckbox.checked);
+        endDateInput.required = !noEndDateCheckbox.checked;
+        if (noEndDateCheckbox.checked) endDateInput.value = "";
     });
 
-    // SUBMIT FORMULARZA (EDYCJA)
-    const form = document.getElementById('editEvacuationForm');
+    // --- WYSYŁKA FORMULARZA (PUT) ---
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const formData = new FormData(form);
+        const scope = formData.get('scope');
 
-        const data = Object.fromEntries(new FormData(form));
-        if (noEndDateCheckbox.checked) data.end_date = null;
+        const payload = {
+            action_name: formData.get('action_name'),
+            event_description: formData.get('event_description'),
+            start_date: formData.get('start_date'),
+            end_date: noEndDateCheckbox.checked ? null : formData.get('end_date'),
+            country_id: parseInt(formData.get('country_id')),
+            city_id: scope === 'city' ? parseInt(formData.get('city_id')) : null
+        };
 
-        const res = await fetch(`/evacuations/{{ evacuation.id }}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
+        try {
+            const res = await fetch(`/evacuations/{{ evacuation.id }}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
 
-        const result = await res.json();
-        const msg = document.getElementById('message');
+            const result = await res.json();
+            const msg = document.getElementById('message');
 
-        if (res.ok) {
-            msg.textContent = "Ewakuacja została zaktualizowana";
-            msg.style.color = "var(--accent)";
-        } else {
-            msg.textContent = result.error || "Błąd podczas aktualizacji ewakuacji";
-            msg.style.color = "var(--danger)";
+            if (res.ok) {
+                msg.textContent = "Zmiany zostały zapisane!";
+                msg.style.color = "green";
+                setTimeout(() => window.location.href = "/evacuations/saved", 1500);
+            } else {
+                msg.textContent = "Błąd: " + (result.error || "Nieznany błąd");
+                msg.style.color = "red";
+            }
+        } catch (err) {
+            console.error(err);
         }
     });
 
-    // USUWANIE EWAKUACJI
+    // --- OBSŁUGA USUWANIA ---
     const deleteBtn = document.getElementById('deleteBtn');
     const deleteModal = document.getElementById('deleteModal');
     const confirmDelete = document.getElementById('confirmDelete');
     const cancelDelete = document.getElementById('cancelDelete');
 
-    deleteBtn.addEventListener('click', () => {
-        deleteModal.classList.remove('hidden');
-    });
-
-    cancelDelete.addEventListener('click', () => {
-        deleteModal.classList.add('hidden');
-    });
+    deleteBtn.addEventListener('click', () => deleteModal.classList.remove('hidden'));
+    cancelDelete.addEventListener('click', () => deleteModal.classList.add('hidden'));
 
     confirmDelete.addEventListener('click', async () => {
-        const res = await fetch(`/evacuations/{{ evacuation.id }}`, { method: 'DELETE' });
-        const msg = document.getElementById('message');
-
-        if (res.ok) {
-            msg.textContent = "Ewakuacja została usunięta";
-            msg.style.color = "var(--danger)";
-            form.style.display = 'none';
-        } else {
-            const result = await res.json();
-            msg.textContent = result.error || "Błąd podczas usuwania ewakuacji";
-            msg.style.color = "var(--danger)";
+        try {
+            const res = await fetch(`/evacuations/{{ evacuation.id }}`, { method: 'DELETE' });
+            if (res.ok) {
+                window.location.href = "/evacuations/deleted";
+            } else {
+                alert("Błąd podczas usuwania");
+            }
+        } catch (err) {
+            console.error(err);
         }
-
-        deleteModal.classList.add('hidden');
     });
 
+    // Start
+    initForm();
 </script>
 {% endblock %}

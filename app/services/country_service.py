@@ -156,3 +156,18 @@ class CityService:
             }
             for city in cities
         ]
+    
+    def get_cities_by_country(self, country_id):
+        try:
+            # Najpierw sprawdzamy, czy kraj w ogóle istnieje
+            country = self.db.query(Country).get(country_id)
+            if not country:
+                raise CountryNotFoundError(f"Country with id {country_id} not found")
+            
+            # Pobieramy miasta (zakładając, że masz relację w modelu)
+            # i zamieniamy je na słowniki za pomocą Twojej metody to_dict()
+            return [city.to_dict() for city in country.cities]
+        except Exception as e:
+            if not isinstance(e, CountryNotFoundError):
+                raise CityServiceError(f"Error fetching cities: {str(e)}")
+            raise e

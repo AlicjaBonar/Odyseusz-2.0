@@ -72,3 +72,19 @@ def get_all_countries():
     except Exception as e:
         return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
 
+@countries_bp.route("/countries/<int:country_id>/cities", methods=["GET"])
+def get_cities_by_country(country_id):
+    """
+    Pobiera wszystkie miasta przypisane do konkretnego kraju.
+    """
+    try:
+        # Możesz użyć CityService, ponieważ zapytanie dotyczy miast
+        service = CityService(g.db)
+        cities = service.get_cities_by_country(country_id)
+        return jsonify(cities), 200
+    except CountryNotFoundError as e:
+        return jsonify({"error": str(e)}), 404
+    except CityServiceError as e:
+        return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
