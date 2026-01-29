@@ -8,6 +8,9 @@ class EmployeeRepository:
     def __init__(self, db: Session):
         self.db = db
     
+    def find_by_id(self, employee_id: int) -> Optional[Employee]:
+        return self.db.query(Employee).filter_by(id=employee_id).first()
+
     def find_by_login(self, login: str) -> Optional[Employee]:
         return self.db.query(Employee).filter_by(login=login).first()
     

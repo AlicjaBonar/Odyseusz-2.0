@@ -7,7 +7,6 @@ from app.services.notification_service import (
     TravelerNotFoundError
 )
 from app.services.traveler_service import TravelerService
-from app.models import Traveler
 from flask_login import login_required, current_user
 
 # Tworzymy Blueprint
@@ -64,11 +63,11 @@ def get_notifications(pesel):
 
 
 # --- ENDPOINT 3: Dashboard Podróżnego (Widok HTML) ---
-@notifications_bp.route('/dashboard/<pesel>')
-def traveler_dashboard(pesel):
+@notifications_bp.route('/dashboard/<id>')
+def traveler_dashboard(id):
     try:
         service = TravelerService(g.db)
-        traveler = service.get_traveler_by_pesel(pesel)
+        traveler = service.get_traveler_by_id(id)
         if not traveler:
             return "Błąd: Nie znaleziono podróżnego", 404
         return render_template('dashboard.html', traveler=traveler)

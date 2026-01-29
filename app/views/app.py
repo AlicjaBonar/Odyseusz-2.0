@@ -72,14 +72,13 @@ def thanks_register_travel_page():
     return render_template("thanks_for_registering_trip.html")
 
 @app_bp.route("/traveler_dashboard")
-@login_required  # chroni stronę, wymaga zalogowania
+@login_required  
 def traveler_dashboard():
-    # current_user to obiekt Traveler lub Employee, w tym przypadku spodziewamy się Traveler
+
     traveler = current_user
 
-    # przekazujemy do szablonu dashboard.html
     return render_template("dashboard.html", traveler=traveler)
-    # return "<h1>Under Construction 🚧</h1><p>Panel podróżnego jest w trakcie tworzenia. Prosimy o cierpliwość.</p>"
+
 
 
 @app_bp.route("/employee_dashboard")

@@ -1,6 +1,7 @@
 # app/mock_data.py
 import random
 from datetime import datetime
+from app.models import EmployeeRole
 
 
 # ============================================================================
@@ -16,7 +17,7 @@ MOCK_ADMIN = {
         "last_name": "Systemu",
         "pesel": "00000000000",
         "email": "admin@odyseusz.pl",
-        "role": "admin", 
+        "role": EmployeeRole.ADMINISTRATOR, 
         "phone_number": "000000000",
         "age": 30
     }

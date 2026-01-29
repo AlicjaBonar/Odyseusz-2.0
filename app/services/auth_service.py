@@ -16,8 +16,6 @@ class InvalidCredentialsError(AuthServiceError):
 
 
 class AuthService:
-
-    
     def __init__(self, db: Session):
         self.db = db
         self.traveler_repository = TravelerRepository(db)

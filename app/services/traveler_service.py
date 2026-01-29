@@ -68,6 +68,9 @@ class TravelerService:
             self.db.rollback()
             raise TravelerServiceError(f"Błąd podczas tworzenia podróżnego: {str(e)}")
     
+    def get_traveler_by_id(self, id: int) -> Optional[Traveler]:
+        return self.repository.find_by_id(id)
+    
     def get_traveler_by_pesel(self, pesel: str) -> Optional[Traveler]:
         return self.repository.find_by_pesel(pesel)
     

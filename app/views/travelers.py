@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, g
+from flask import Blueprint, jsonify, request, g, render_template
 from app.services.traveler_service import (
     TravelerService,
     TravelerServiceError,

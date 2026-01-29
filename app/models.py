@@ -26,6 +26,11 @@ class ThreatLevel(PyEnum):
     HIGH = "high"
     EXTREME = "extreme"
 
+class EmployeeRole(PyEnum):
+    CONSULAR_EMPLOYEE = "CONSULAR_EMPLOYEE"
+    ADMINISTRATOR = "ADMINISTRATOR"
+    CRISIS_COORDINATOR = "CRISIS_COORDINATOR"
+
 trip_companion_association = Table(
     "trip_companion",
     Base.metadata,
@@ -53,24 +58,29 @@ class Consulate(Base):
 
 class Employee(UserMixin, Base):
     __tablename__ = "employees"
-    pesel = Column(String, unique=True, index=True, nullable=False)
+    id = Column(Integer, primary_key=True, index=True)
+    login = Column(String, unique=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+    
+    pesel = Column(String, unique=True, index=True)
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     age = Column(Integer)
-    phone_number = Column(String, unique=True)
-    email = Column(String, unique=True, index=True)
-    passport_number = Column(String, unique=True)
-    id_card_number = Column(String, unique=True)
-    role = Column(String, nullable=False)
-    login = Column(String, primary_key=True)
-    password_hash = Column(String, nullable=False)
+    phone_number = Column(String)
+    email = Column(String, unique=True)
+    
+    last_login = Column(DateTime)
+    pref_sms = Column(Boolean, default=False)
+    pref_email = Column(Boolean, default=False)
+    pref_system = Column(Boolean, default=True)
 
+    role = Column(Enum(EmployeeRole), nullable=False)
     consulate_id = Column(Integer, ForeignKey("consulates.id"))
-
-    consulate = relationship("Consulate", back_populates="employees")
+    
+    consulate = relationship("Consulate", back_populates="employees", lazy="joined")
 
     def get_id(self):
-        return self.login
+        return str(self.id)
 
 class City(Base):
     __tablename__ = "cities"
@@ -118,7 +128,11 @@ class Companion(Base):
 
 class Traveler(UserMixin, Base):
     __tablename__ = "travelers"
-    pesel = Column(String, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
+    login = Column(String, unique=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+    
+    pesel = Column(String, unique=True, index=True)
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     age = Column(Integer)
@@ -126,17 +140,19 @@ class Traveler(UserMixin, Base):
     email = Column(String, unique=True, index=True)
     passport_number = Column(String, unique=True)
     id_card_number = Column(String, unique=True)
-    login = Column(String, unique=True, nullable=False)
-    password_hash = Column(String, nullable=False)
+    
+    gdpr_consent = Column(Boolean, default=False) #rodo
+    last_login = Column(DateTime)
     pref_sms = Column(Boolean, default=False)
     pref_email = Column(Boolean, default=False)
-    pref_push = Column(Boolean, default=True)
+    pref_system = Column(Boolean, default=True)
 
     trips = relationship("Trip", back_populates="traveler")
     companions = relationship("Companion", back_populates="added_by_traveler")
+    notifications = relationship("Notification", back_populates="traveler")
 
     def get_id(self):
-        return self.pesel
+        return self.id
 
 class Evacuation(Base):
     __tablename__ = "evacuations"
@@ -148,6 +164,9 @@ class Evacuation(Base):
     event_description = Column(String)
     trips = relationship("Trip", back_populates="evacuation")
     evacuation_areas = relationship("EvacuationArea", back_populates="evacuation")
+
+    warning_id = Column(Integer, ForeignKey("consular_warnings.id"), nullable=True)
+    warning = relationship("ConsularWarning", back_populates="evacuations", foreign_keys=[warning_id])
 
 class EvacuationArea(Base):
     __tablename__ = "evacuation_areas"
@@ -198,7 +217,7 @@ class Notification(Base):
     created_at = Column(DateTime, default=datetime.now)
     is_read = Column(Boolean, default=False)
 
-    traveler = relationship("Traveler", backref="notifications")
+    traveler = relationship("Traveler", back_populates="notifications")
 
 warning_location_association = Table(
     "warning_location",
@@ -209,14 +228,14 @@ warning_location_association = Table(
 
 class ConsularWarning(Base):
     __tablename__ = "consular_warnings"
-    
     id = Column(Integer, primary_key=True, index=True)
-    external_id = Column(String, unique=True, index=True, nullable=False) 
+    external_id = Column(String, unique=True, index=True) 
     name = Column(String, nullable=False)                              
     content = Column(String, nullable=False)                      
-    warning_type = Column(String, nullable=False)                
+    warning_type = Column(String)                
     threat_level = Column(Enum(ThreatLevel), nullable=False)      
     publication_date = Column(DateTime, default=datetime.now)           
-    expiry_date = Column(DateTime, nullable=False)                         
+    expiry_date = Column(DateTime)                         
 
-    locations = relationship("Location", secondary=warning_location_association)
+    locations = relationship("Location", secondary=warning_location_association) 
+    evacuations = relationship("Evacuation", back_populates="warning")

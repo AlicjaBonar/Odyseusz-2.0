@@ -3,7 +3,7 @@ from app.database.database import SessionLocal, engine, Base
 from sqlalchemy.exc import SQLAlchemyError
 from flask_wtf import CSRFProtect
 from flask_login import LoginManager
-from app.models import Traveler, Employee
+from app.repositories import EmployeeRepository, TravelerRepository
 from app.database.database import SessionLocal
 
 csrf = CSRFProtect()
@@ -20,11 +20,17 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         db = SessionLocal()
-        user = db.query(Traveler).filter_by(pesel=user_id).first()
-        if user:
-            return user
-        user = db.query(Employee).filter_by(login=user_id).first()
-        return user
+        try:
+        # Flask-Login przechowuje ID jako string, rzutujemy na int
+            u_id = int(user_id)
+
+            user = EmployeeRepository(db).find_by_id(u_id)
+            if user:
+                return user
+            
+            return TravelerRepository(db).find_by_id(u_id)
+        finally:
+            db.close()
     
     login_manager.init_app(app)
     
