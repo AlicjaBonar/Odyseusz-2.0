@@ -34,13 +34,21 @@ class WarningService:
             }
 
             existing = warning_repo.find_by_external_id(ext_id)
-            
+
             if existing is None:
                 warning_repo.add(warning_data)
                 print(f"Dodano nowe ostrzeżenie: {ext_id}")
             else:
-                if existing.name != warning_data["name"] or existing.content != warning_data["content"]:
+                has_changed = (
+                    existing.name != warning_data["name"] or
+                    existing.content != warning_data["content"] or
+                    existing.threat_level != warning_data["threat_level"] or
+                    existing.warning_type != warning_data["warning_type"] or
+                    existing.expiry_date != warning_data["expiry_date"]
+                )
+                
+                if has_changed:
                     warning_repo.update(ext_id, warning_data)
-                    print(f"Zaktualizowano ostrzeżenie: {ext_id}")
+                    print(f"Zaktualizowano ostrzeżenie: {ext_id} (zmiana w polach)")
         
         return True

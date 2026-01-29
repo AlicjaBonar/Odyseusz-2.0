@@ -1,4 +1,3 @@
-# repositories/warning_repository.py
 from app.models import ConsularWarning
 from app.database.database import SessionLocal
 
